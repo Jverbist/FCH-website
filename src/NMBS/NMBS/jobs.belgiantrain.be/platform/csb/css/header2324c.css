@@ -1,0 +1,177 @@
+@media (max-width: 768px) {
+    .header-bottom .header-right {
+        display:auto;
+    }
+    .header-top {
+        display:none;
+    }
+}
+@media (min-width: 769px) {
+    .header-bottom .header-right {
+        display:none;
+    }
+    .header-top {
+        display:block;
+    }
+}
+#header {
+    margin: 0 auto;
+    width: 100%; /* IE support */
+}
+.innerheadertop, .innerheaderbottom {
+    margin:0px auto;
+}
+.header-bottom .header-right {
+    float:right;
+    clear:both;
+}
+#header .header-bottom .container {
+    padding:20px;
+}
+#header .dropdown-menu {
+    margin: 0;
+    min-width: 0;
+    overflow: visible;
+    padding: 5px 0;
+    right: auto;
+    left:auto;
+}
+#header .dropdown-menu-right {
+    right: 0;
+    left: auto;
+}
+.nav .open > a, .nav .open > a:hover, .nav .open > a:focus, .nav > li > a:hover, .nav > li > a:focus {
+    background:none;
+}
+.innerheadertop .menu{
+    margin-bottom:0px;
+}
+#header .header-right .nav > li:first-child .dropdown-menu {
+    right:auto;
+}
+#header .header-right .nav > li:last-child .dropdown-menu {
+    right:0 !important;
+}
+#header .header-right .dropdown-menu {
+    right:0;
+    left:auto;
+}
+#header .dropdown-menu > li > a:focus, #header .dropdown-menu > li > a:hover{
+    background-color:inherit;
+}
+#header .dropdown-menu > li {
+    font-size: 0.75em;
+}
+#header .header-bottom .container .menu-btn {
+    border: none;
+    box-shadow: none;
+    height: 38px;
+    padding: 0;
+    width: 33px;
+    font-size:2.7em;
+    margin-right:28px;
+}
+#header .header-bottom .container .search-btn {
+    border: none;
+    box-shadow: none;
+    height: 40px;
+    padding: 0;
+    width: 40px;
+    font-size:38px;
+    margin-right:28px;
+}
+.menu.mobile .dropdown-menu {
+    top:auto;
+}
+#header .menu.mobile .dropdown-menu .dropdown-menu {
+    width:auto;
+    right:auto;
+    left:15px;
+}
+.menu.mobile .nav {
+    *zoom: 1;
+    margin: 0;
+    padding: 0;
+    float: right;
+}
+.menu.mobile .nav:before,
+.menu.mobile .nav:after {
+    display: table;
+    content: "";
+    line-height: 0;
+}
+.menu.mobile .nav:after {
+    clear: both;
+}
+.menu.mobile .nav > .dropdown {
+    float: left;
+    font-size: 1em;
+    position: static;
+}
+.menu.mobile .nav>.dropdown >.dropdown-toggle {
+    font-size: 1.3125em;
+    display: block;
+    padding: 7.5px;
+    text-decoration: none;
+}
+.menu.mobile .nav .dropdown .dropdown-toggle i.fa {
+    display: block;
+    line-height: 1em;
+}
+.menu.mobile .nav .dropdown .dropdown-menu {
+    width: 100%;
+}
+.menu.mobile .nav .dropdown.mobile-nav .dropdown-menu ul {
+    margin: 0;
+    padding: 0;
+}
+.menu.mobile .nav .dropdown.mobile-nav .dropdown-menu li {
+    font-size: 1em;
+}
+.menu.mobile .nav .dropdown.mobile-nav .dropdown-menu li a{
+    display: inline-block;
+    padding: 7.5px 15px;
+}
+.menu.mobile .nav .dropdown.mobile-nav .dropdown-menu li a {
+    background: transparent none;
+    text-decoration: none;
+}
+.menu.mobile .nav .dropdown.mobile-nav .dropdown-menu li span {
+    font-weight: bold;
+    text-decoration: underline;
+}
+.menu.mobile .nav .dropdown.mobile-nav .dropdown-menu li.break {
+    margin: 0;
+    padding: 0;
+    display: block;
+    height: 1px;
+    margin: 7.5px 0;
+    width: auto;
+}
+#header .profileWidget {
+    margin-top:10px;
+}
+#header .employeeWidget {
+    margin-top:10px;
+}
+.employeeWidget .dropdown-menu {
+    right: 0px;
+    left: auto;
+}
+.menu.mobile .employeeWidget .dropdown-menu .profileWidget {
+    margin-top: 0px;
+}
+.header-top .employeeWidget .dropdown-menu .profileWidget {
+    margin-top: 0px;
+    padding: 3px 20px;
+}
+#header .marginLeft {
+    margin-left: 10px;
+}
+HTML.ie8 #header .header-bottom .header-right {
+    display:none !important;
+}
+#header .container .navbar {
+    margin-bottom:0px;
+    min-height:0px;
+}

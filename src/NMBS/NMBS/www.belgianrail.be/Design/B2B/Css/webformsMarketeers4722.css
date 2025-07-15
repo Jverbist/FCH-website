@@ -1,0 +1,260 @@
+﻿/* Errors placement are update by JS (see jquery.functions.js:brail.webformsMark.fixErrors) */
+
+/* WEBFORMS */
+
+
+.lte8 .webforms-marketeers .mod-blue-uni > .bd,
+.webforms-marketeers .mod-blue-uni {
+    padding-top: 0;
+}
+
+.webforms-marketeers .halfAvailableWidth .mod-blue-uni,
+.webforms-marketeers .thirdAvailableWidth .mod-blue-uni {
+    margin: 5px;
+}
+
+.webforms-marketeers .thirdAvailableWidth,
+.webforms-marketeers .thirdAvailableWidth { display: inline-block; } 
+
+.webforms-marketeers .scfCaptcha .scfValidator,
+.webforms-marketeers .thirdAvailableWidth .textBox {
+    max-width: 116px;
+}
+
+.webforms-marketeers .thirdAvailableWidth select,
+.webforms-marketeers .thirdAvailableWidth input[type=file] {
+    max-width: 123px;
+}
+.webforms-marketeers .thirdAvailableWidth input[type=file] 
+{
+    width: 100%;
+}
+
+.webforms-marketeers input {
+    display: inline;
+    width: auto;
+}
+
+.webforms-marketeers .scfSubmitButtonBorder {
+    float: none;
+    clear: both;
+}
+
+.webforms-marketeers .scfRequired,
+.webforms-marketeers .scfValidatorRequired {
+    float: none;
+    color:#006AB3;
+}
+
+.webforms-marketeers .scfCaptchaLimitGeneralPanel .scfRequired,
+.webforms-marketeers .scfCaptchaLimitGeneralPanel .scfValidatorRequired 
+{
+    display: none!important;
+}
+
+.webforms-marketeers .textBox input {
+    width: 100%;
+}
+
+.ie8 .webforms-marketeers .textBox input {
+    height: 31px;
+}
+
+.webforms-marketeers .scfSectionBorderAsFieldSet {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.webforms-marketeers .scfSectionContent {
+    padding: 0 20px;
+    width: auto;
+}
+
+.lte8 .webforms-marketeers .thirdAvailableWidth .scfSectionContent {
+    width: 126px;
+}
+
+
+.webforms-marketeers .scfSectionLegend {
+    padding-left:0;
+    margin-left:0;
+    
+    color:#006AB3;
+    font-size:14px
+}
+
+.webforms-marketeers .scfSingleLineTextBorder,
+.webforms-marketeers .scfMultipleLineTextBorder,
+.webforms-marketeers .scfPasswordBorder,
+.webforms-marketeers .scfEmailBorder,
+.webforms-marketeers .scfTelephoneBorder,
+.webforms-marketeers .scfSmsTelephoneBorder,
+.webforms-marketeers .scfNumberBorder,
+.webforms-marketeers .scfDateSelectorBorder,
+.webforms-marketeers .scfCheckboxBorder,
+.webforms-marketeers .scfFileUploadBorder,
+.webforms-marketeers .scfDropListBorder,
+.webforms-marketeers .scfListBoxBorder,
+.webforms-marketeers .scfRadioButtonListBorder,
+.webforms-marketeers .scfCheckBoxListBorder,
+.webforms-marketeers .scfConfirmPasswordBorder,
+.webforms-marketeers .scfCreditCard,
+.webforms-marketeers .scfCreditCardBorder,
+.webforms-marketeers .scfCaptcha {
+    width: auto;
+    overflow: hidden;
+}
+
+.webforms-marketeers .scfSingleLineTextLabel,
+.webforms-marketeers .scfMultipleLineTextLabel,
+.webforms-marketeers .scfPasswordLabel,
+.webforms-marketeers .scfEmailLabel,
+.webforms-marketeers .scfTelephoneLabel,
+.webforms-marketeers .scfSmsTelephoneLabel,
+.webforms-marketeers .scfNumberLabel,
+.webforms-marketeers .scfDateSelectorLabel,
+.webforms-marketeers .scfCheckboxLabel,
+.webforms-marketeers .scfFileUploadLabel,
+.webforms-marketeers .scfDropListLabel,
+.webforms-marketeers .scfListBoxLabel,
+.webforms-marketeers .scfRadioButtonListLabel,
+.webforms-marketeers .scfCheckBoxListLabel,
+.webforms-marketeers .scfConfirmPasswordLabel,
+.webforms-marketeers .scfCreditCardLabel,
+.webforms-marketeers .scfCaptchaLabelText {
+    width: auto;
+    color:#006AB3;
+}
+
+.webforms-marketeers .scfSingleLineGeneralPanel,
+.webforms-marketeers .scfMultipleLineGeneralPanel,
+.webforms-marketeers .scfPasswordGeneralPanel,
+.webforms-marketeers .scfEmailGeneralPanel,
+.webforms-marketeers .scfTelephoneGeneralPanel,
+.webforms-marketeers .scfSmsTelephoneGeneralPanel,
+.webforms-marketeers .scfNumberGeneralPanel,
+.webforms-marketeers .scfDateSelectorGeneralPanel,
+.webforms-marketeers .scfCheckbox,
+.webforms-marketeers .scfFileUploadGeneralPanel,
+.webforms-marketeers .scfDropListGeneralPanel,
+.webforms-marketeers .scfListBoxGeneralPanel,
+.webforms-marketeers .scfRadioButtonListGeneralPanel,
+.webforms-marketeers .scfCheckBoxListGeneralPanel,
+.webforms-marketeers .scfConfirmPasswordGeneralPanel,
+.webforms-marketeers .scfCreditCardGeneralPanel,
+.webforms-marketeers .scfCaptchaGeneralPanel,
+.webforms-marketeers .scfCaptchStrongTextPanel {
+    clear: both;
+    display: inline;
+    width: 100%;
+    position: relative;
+}
+
+.webforms-marketeers .scfMultipleLineTextBorder,
+.webforms-marketeers .scfCheckboxBorder,
+.webforms-marketeers .scfFileUploadBorder,
+.webforms-marketeers .scfDateSelectorBorder,
+.webforms-marketeers .scfDropListBorder,
+.webforms-marketeers .scfListBoxBorder,
+.webforms-marketeers .scfRadioButtonListBorder,
+.webforms-marketeers .scfCheckBoxListBorder,
+.webforms-marketeers .scfCreditCard,
+.webforms-marketeers .scfCreditCardBorder  {
+    padding-bottom: 18px;
+}
+
+.webforms-marketeers .scfDateSelectorGeneralPanel {
+    width: 100%;
+}
+
+.webforms-marketeers .scfDateSelectorGeneralPanel label {
+    color:#006AB3;
+}
+
+.webforms-marketeers .scfCreditCard .scfCreditCardBorder {
+    width: 100%;
+    padding: 0;
+    overflow: hidden;
+}
+
+.webforms-marketeers .scfCaptchaLabel {
+    display: none;
+}
+
+.webforms-marketeers .scfCaptchaGeneralPanel table {
+    margin-top: 0;
+}
+
+.webforms-marketeers .scfCaptchaLimitGeneralPanel {
+    width: auto;
+}
+
+/* Errors */
+
+.webforms-marketeers .scfValidationSummary {background:#EB690A; color:#fff; margin:10px -20px; padding:10px 20px}
+.webforms-marketeers .scfValidationSummary ul li {background: url("https://www.belgianrail.be/Design/B2B/img/website/sprite-master.png") no-repeat scroll -1774px -212px transparent; padding-left: 13px;}
+.webforms-marketeers .scfValidator {
+    display: block;
+    float: none;
+    clear: both;
+    color:#F00;
+    font-size:10px;
+    line-height:12px;
+}
+
+.webforms-marketeers .scfValidatorRequired 
+{
+    display: inline-block;
+    width: 30px;
+    height: 22px;
+    background: url("https://www.belgianrail.be/Design/B2B/img/website/ico-warning.png") no-repeat scroll right 0;
+    cursor: pointer;
+    text-indent: -9999px;
+}
+
+/* ie7 fixes */
+.ie7 .webforms-marketeers .halfAvailableWidth .scfSectionContent > .halfAvailableWidth,
+.ie7 .webforms-marketeers .thirdAvailableWidth .scfSectionContent > .halfAvailableWidth,
+.ie7 .webforms-marketeers .halfAvailableWidth {
+    width: 49.9%;
+}
+
+.ie7 .webforms-marketeers .scfSectionContent > .halfAvailableWidth {
+    width: 291px;   
+}
+
+.ie7 .webforms-marketeers .halfAvailableWidth .scfSectionContent > .thirdAvailableWidth,
+.ie7 .webforms-marketeers .thirdAvailableWidth .scfSectionContent > .thirdAvailableWidth 
+{
+    width: 33%;
+}
+
+.ie7 .webforms-marketeers .scfSectionContent > .thirdAvailableWidth {
+    width: 202px;   
+}
+
+.ie7 .webforms-marketeers .textBox input {
+    width: auto;
+}
+
+.ie7 .webforms-marketeers .thirdAvailableWidth .textBox input 
+{
+    max-width: 94%;
+}
+
+.ie7 .webforms-marketeers .halfAvailableWidth .halfAvailableWidth .textBox input,
+.ie7 .webforms-marketeers .halfAvailableWidth .thirdAvailableWidth .textBox input { width: 86%; }
+
+.ie7 .webforms-marketeers .thirdAvailableWidth .halfAvailableWidth .textBox input { max-width: 45px; }
+.ie7 .webforms-marketeers .thirdAvailableWidth .thirdAvailableWidth .textBox input { max-width: 25px; }
+
+.ie7 .webforms-marketeers .scfDateSelectorGeneralPanel label { width: 194px; }
+.ie7 .webforms-marketeers .halfAvailableWidth .scfDateSelectorGeneralPanel label { width: 79px; }
+.ie7 .webforms-marketeers .thirdAvailableWidth .scfDateSelectorGeneralPanel label { width: 42px; }
+.ie7 .webforms-marketeers .scfDateSelectorGeneralPanel select { width: 33%!important; }
+
+.ie7 .webforms-marketeers select { width: auto; }
+.ie7 .webforms-marketeers .thirdAvailableWidth select { width: 100%; }
+
+/* */

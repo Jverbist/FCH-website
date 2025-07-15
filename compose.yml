@@ -1,0 +1,32 @@
+services:
+  nginx:
+    image: nginx:latest
+    container_name: webserver-DMZ-nginx
+    ports:
+      - "4433:443"
+      - "80:80"
+    volumes:
+      - ./conf:/etc/nginx/conf.d:ro
+      - ./src:/usr/share/nginx/html
+    restart: always
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    container_name: webserver-DMZ-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "#WeAreExclusive"
+      MYSQL_DATABASE: "loginDB"
+      MYSQL_USER: "webuser"
+      MYSQL_PASSWORD: "#WeAreExclusive"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: always
+
+volumes:
+  mysql_data:
+    driver: local
+

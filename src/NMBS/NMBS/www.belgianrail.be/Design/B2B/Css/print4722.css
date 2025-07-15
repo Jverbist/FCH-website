@@ -1,0 +1,87 @@
+﻿/* print styles from B2B specific */
+
+#shoppingbasket div.infoDetails { display: block;position: static; border: none;width: auto; margin:15px 0;}
+.button-row { display: none; }
+
+/* print styles from B2C with some commented out */
+
+body, #content, #container {
+	width: 100%;
+	margin: 0;
+	float: none;
+	background: #fff url(https://www.belgianrail.be/Design/B2B/css/none);
+}
+
+
+#topnav, #navbar, #nav, #sidebar, .ad, .noprint, /*.header,*/ .breadcrumb-navigation, .menu, .fwrapper, .print-links, .smallIcon, .ticketwizard {
+	display: none; 
+}
+
+
+body {
+	/*font: 1em Georgia, "Times New Roman", Times, serif;*/
+	color: #000; 
+}
+
+
+h1,h2,h3,h4,h5,h6 {
+	/*font-family: Helvetica, Arial, sans-serif;*/
+	color: #000;
+}
+h1 { font-size: 250%; }
+h2 { font-size: 175%; }
+h3 { font-size: 135%; }
+h4 { font-size: 100%; font-variant: small-caps; }
+h5 { font-size: 100%; }
+h6 { font-size: 90%; font-style: italic; }
+
+
+a:link, a:visited {
+	color: #00c;
+	font-weight: bold;
+	text-decoration: underline; }
+#content a:link:after, #content a:visited:after {
+	content: " (" attr(href) ") ";
+}
+
+.grid_3
+{
+    width:0;
+}
+
+.container_12 .grid_9
+{
+    width:100%;
+    margin:auto;
+}
+
+.pop-in-grid
+{
+    background:none;
+    box-shadow:none;
+    border-radius:0;
+    border: none;
+}
+
+#print-logo
+{
+    display:block;
+    width:100%;
+    text-align:center;
+    padding: 20px 0;
+}
+
+.mod-blue-light-border { background: none; border: none; padding: 20px; box-shadow:none;}
+.lte8 .mod-blue-light-border { background: none; border: none; padding: 0; }
+.lte8 .mod-blue-light-border .m-top, .lte8 .mod-blue-light-border .m-bottom { display: block; overflow: hidden; height: 7px; }
+.lte8 .mod-blue-light-border .m-tl,
+.lte8 .mod-blue-light-border .m-tr,
+.lte8 .mod-blue-light-border .m-bl,
+.lte8 .mod-blue-light-border .m-br { background: none; height: 7px; display: block; float: left; width: 50%; }
+.lte8 .mod-blue-light-border .m-tr, 
+.lte8 .mod-blue-light-border .m-br { display: table-cell; float: none; width: auto; *display: block; *zoom: 1; }
+.lte8 .mod-blue-light-border .m-tr:after, 
+.lte8 .mod-blue-light-border .m-br:after {clear:both;display:block;visibility:hidden;overflow:hidden;height:0 !important;line-height:0;font-size:xx-large;content:" x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x ";}
+.lte8 .mod-blue-light-border > .bd { background: none; padding: 14px 20px; border: none; border-width: 0; }
+
+.infoDetails { display: block; }

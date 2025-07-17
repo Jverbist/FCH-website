@@ -1,49 +1,68 @@
 <?php
-$servername = "mysql";
-$username = "admin"; // use your MySQL username
-$password = "admin"; // use your MySQL password
-$dbname = "mydb";
+// ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
+// Database connection settings
+// ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
+$host     = "mysql";    // Docker service name
+$dbUser   = "admin";    
+$dbPass   = "admin";    
+$dbName   = "mydb";
 
 // Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
+$conn = new mysqli($host, $dbUser, $dbPass, $dbName);
 
 // Check connection
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    if (!empty($_POST['userName'])) {
-        // Vulnerable SQL query
-        $userName = $_POST['userName'];
-        $password = $_POST['password'];
-        $sql = "SELECT * FROM users WHERE email = '$userName' AND password = '$password'";
 
-        $result = $conn->query($sql);
+// ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
+// Handle the POSTed login form
+// ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    // Grab & trim inputs
+    $userEmail = trim($_POST['userName'] ?? '');
+    $userPass  = trim($_POST['password'] ?? '');
 
-        if ($result === FALSE) {
-            // SQL error
-            $error = urlencode($conn->error);
-            header("Location: mynmbs.php?error=$error");
-            exit();
-        } else if ($result->num_rows > 0) {
-            $row = $result->fetch_assoc();
-			
-            // Successful login
-            session_start();
-            $_SESSION['userName'] = $userName;
-            header("Location: myaccount.php");
-            exit(); // Ensure no further code is executed after redirection
-        } else {
-            // No user found or invalid password
-            header("Location: mynmbs.php?error=Invalid%20username%20or%20password");
-            exit();
-        }
+    // 1) Validate presence
+    if ($userEmail === '' || $userPass === '') {
+        header("Location: mynmbs.php?error=Please%20enter%20all%20fields");
+        exit();
+    }
+
+    // 2) Prepare and execute query safely
+    $stmt = $conn->prepare(
+        "SELECT id, email 
+           FROM users 
+          WHERE email = ? 
+            AND password = ?"
+    );
+
+    // if prepare() failed, bail with the error
+    if ($stmt === false) {
+        $err = urlencode($conn->error);
+        header("Location: mynmbs.php?error=$err");
+        exit();
+    }
+
+    $stmt->bind_param("ss", $userEmail, $userPass);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    // 3) Check results
+    if ($result && $result->num_rows > 0) {
+        // Successful login
+        session_start();
+        $_SESSION['userName'] = $userEmail;
+        header("Location: myaccount.php");
+        exit();
     } else {
-        // Missing username
-        header("Location: mynmbs.php?error=Please%20enter%20username");
+        // Invalid credentials
+        header("Location: mynmbs.php?error=Invalid%20username%20or%20password");
         exit();
     }
 }
+
+// Close the connection when done
 $conn->close();
-?>
+

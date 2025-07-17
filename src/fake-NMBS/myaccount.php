@@ -1,40 +1,43 @@
 <?php
-session_start(); 
+// myaccount.php
+
+session_start();
 if (!isset($_SESSION['userName'])) {
-    header('Location: mynmbs.php');
-    exit();
+    // No payload? Go back to the form
+    header('Location: login.php');
+    exit;
 }
 
-// Database connection
-$host   = 'mysql';    // in Docker use the service name
-$dbUser = 'admin';
-$dbPass = 'admin';
-$dbName = 'mydb';
-
-$conn = new mysqli($host, $dbUser, $dbPass, $dbName);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+// 1) Connect to MySQL
+$mysqli = new mysqli('mysql', 'admin', 'admin', 'mydb');
+if ($mysqli->connect_error) {
+    die("DB Connection failed: " . htmlentities($mysqli->connect_error));
 }
 
-// === VULNERABLE SQL INJECTION DUMP ===
-// take the raw session username (no escaping!)
+// 2) Disable automatic exceptions so we can handle bad syntax
+mysqli_report(MYSQLI_REPORT_OFF);
+
 $userName = $_SESSION['userName'];
 
-// build an injectable query; the trailing -- comments out any rest
-$sql = "SELECT * FROM users WHERE email = '$userName' -- ";
-$result = $conn->query($sql);
+// 3) Build your injectable query. Everything after the `-- ` is ignored.
+$sql = "SELECT * 
+          FROM users 
+         WHERE email = '$userName' 
+           -- ";
 
+// 4) Run it
+$result = $mysqli->query($sql);
 if ($result === false) {
-    die("SQL error: " . htmlentities($conn->error));
+    // Syntax error (e.g. you typed only a lone quote)
+    echo "<h1>SQL Syntax Error</h1>";
+    echo "<p>Payload: <code>" . htmlentities($userName) . "</code></p>";
+    echo "<pre><code>" . htmlentities($mysqli->error) . "</code></pre>";
+    exit;
 }
 
-// turn all returned rows into HTML
-$rows = [];
-while ($row = $result->fetch_assoc()) {
-    $rows[] = $row;
-}
-
-$conn->close();
+// 5) Fetch all rows (when your injection succeeded)
+$rows = $result->fetch_all(MYSQLI_ASSOC);
+$mysqli->close();
 ?>
 
 <!DOCTYPE html>
@@ -187,37 +190,34 @@ nl        </a>
 </div>
     </div>
 </header>
-<main class="">
-    <div class="page__content">
-      <h1>Welkom <?php echo htmlentities($userName); ?>!</h1>
-      <p>Hieronder de volledige database dump op basis van je injectie:</p>
+<h1>SQLi Dump</h1>
 
-      <?php if (count($rows) > 0): ?>
-        <table border="1" cellpadding="5" style="border-collapse:collapse;width:100%">
-          <thead>
-            <tr>
-              <?php foreach (array_keys($rows[0]) as $col): ?>
-                <th><?php echo htmlentities($col); ?></th>
-              <?php endforeach; ?>
-            </tr>
-          </thead>
-          <tbody>
-            <?php foreach ($rows as $row): ?>
-              <tr>
-                <?php foreach ($row as $cell): ?>
-                  <td><?php echo htmlentities($cell); ?></td>
-                <?php endforeach; ?>
-              </tr>
+  <h2>Executed Query</h2>
+  <pre><code><?php echo htmlentities($sql); ?></code></pre>
+
+  <?php if (count($rows)): ?>
+    <h2>Returned Rows (<?php echo count($rows); ?>)</h2>
+    <table>
+      <thead>
+        <tr>
+          <?php foreach (array_keys($rows[0]) as $col): ?>
+            <th><?php echo htmlentities($col); ?></th>
+          <?php endforeach; ?>
+        </tr>
+      </thead>
+      <tbody>
+        <?php foreach ($rows as $r): ?>
+          <tr>
+            <?php foreach ($r as $c): ?>
+              <td><?php echo htmlentities($c); ?></td>
             <?php endforeach; ?>
-          </tbody>
-        </table>
-      <?php else: ?>
-        <p><em>Geen gebruikers gevonden.</em></p>
-      <?php endif; ?>
-    </div>
-
-    <!-- rest of your original page content… -->
-  </main>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  <?php else: ?>
+    <p><em>No rows returned.</em></p>
+  <?php endif; ?>
 <div class="nav-sidebar__container nav-sidebar--navigation " style="">
     <div class="nav-sidebar__header">
         <div class="nav-sidebar__logo nav-sidebar--show-close">

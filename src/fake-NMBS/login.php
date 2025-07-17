@@ -1,65 +1,71 @@
 <?php
-session_start(); // ? must be first line, no output before this
-
-// If already Òlogged inÓ, send straight to the dump page
-if (isset($_SESSION['userName'])) {
-    header('Location: myaccount.php');
+session_start();
+if (!isset($_SESSION['userName'])) {
+    header('Location: login.php');
     exit;
 }
 
-// DB connection settings
-$host   = 'mysql';    // Docker service name
-$dbUser = 'admin';
-$dbPass = 'admin';
-$dbName = 'mydb';
-
-// 1) Connect
-$conn = new mysqli($host, $dbUser, $dbPass, $dbName);
+$conn = new mysqli('mysql','admin','admin','mydb');
 if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+    die("Connection failed: ".$conn->connect_error);
 }
 
-// 2) Handle the login form
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Grab raw username (email) field
-    $userInput = $_POST['userName'] ?? '';
+// ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
+// Change here: we no longer append a Ò--Ó comment.
+// Now we require you to close the email string and inject your OR.
+// A lone quote will produce a syntax error, not a full dump.
+// ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
+$userName = $_SESSION['userName'];
 
-    // Store it in the session for the dump page
-    $_SESSION['userName'] = $userInput;
+// THIS is the vulnerable line:
+$sql = "SELECT * 
+          FROM users 
+         WHERE email    = '$userName' 
+           AND password = ''";
 
-    // Redirect immediately to your vulnerable dump page
-    header('Location: myaccount.php');
-    exit;
+$result = $conn->query($sql);
+
+// If you donÕt inject properly, youÕll get an error or no rows:
+if ($result === false) {
+    die("SQL error: " . htmlentities($conn->error));
 }
 
-// 3) If not a POST, show the login form
+// Fetch rows for display
+$rows = $result->fetch_all(MYSQLI_ASSOC);
+$conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="nl">
 <head>
   <meta charset="utf-8">
-  <title>Login</title>
-  <style>
-    body { font-family:sans-serif; padding:2rem; }
-    form { max-width:300px; margin:auto; }
-    input { width:100%; padding:.5rem; margin:.5rem 0; }
-    button { padding:.5rem 1rem; }
-  </style>
+  <title>My NMBS Ð SQLi Dump</title>
 </head>
 <body>
-  <h1>Fake NMBS Login</h1>
-  <form method="post" action="login.php">
-    <label>
-      Email:<br>
-      <input type="text" name="userName" placeholder="e.g. alice@example.com" required>
-    </label>
-    <label>
-      Password:<br>
-      <input type="password" name="password" placeholder="(ignored)" required>
-    </label>
-    <button type="submit">Log in</button>
-  </form>
-  <p><em>For a full SQLi dump, use <code>' OR '1'='1</code> as the email.</em></p>
+  <h1>Welkom, <?php echo htmlentities($userName) ?></h1>
+  <p>Hieronder zie je de query en (alle) rijen als je een geldige SQL?injectie hebt gedaan:</p>
+
+  <pre><code><?php echo htmlentities($sql); ?></code></pre>
+
+  <?php if (count($rows)): ?>
+    <table border="1" cellpadding="5" style="border-collapse:collapse">
+      <thead>
+        <tr><?php foreach (array_keys($rows[0]) as $col): ?>
+          <th><?php echo htmlentities($col) ?></th>
+        <?php endforeach ?></tr>
+      </thead>
+      <tbody>
+        <?php foreach ($rows as $row): ?>
+          <tr>
+            <?php foreach ($row as $cell): ?>
+              <td><?php echo htmlentities($cell) ?></td>
+            <?php endforeach ?>
+          </tr>
+        <?php endforeach ?>
+      </tbody>
+    </table>
+  <?php else: ?>
+    <p><em>Geen rijen ontvangen.</em></p>
+  <?php endif; ?>
 </body>
 </html>
 

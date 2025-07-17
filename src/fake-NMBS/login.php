@@ -1,8 +1,8 @@
 <?php
 $servername = "localhost";
-$username = "webuser"; // use your MySQL username
-$password = "#WeAreExclusive"; // use your MySQL password
-$dbname = "loginDB";
+$username = "admin"; // use your MySQL username
+$password = "admin"; // use your MySQL password
+$dbname = "mydb";
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);

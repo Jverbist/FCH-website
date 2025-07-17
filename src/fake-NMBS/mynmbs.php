@@ -7,7 +7,7 @@
    <title>MyNMBS</title> <!-- Title of the document, with a data attribute for internationalization -->
    <meta name="description" content="My NMBS" /> <!-- Meta description for the document -->
    <meta name="viewport" content="width=device-width, initial-scale=1" /> <!-- Sets the viewport to make the website responsive -->
-   <link rel="stylesheet" href="../../../web40/v5/css/style.css" /> <!-- Link to external stylesheet -->
+   <link rel="stylesheet" href="../fake-NMBS/v5/css/style.css" /> <!-- Link to external stylesheet -->
 </head>
 <body style="padding-top: 100px;">
 

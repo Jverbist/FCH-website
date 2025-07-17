@@ -1,32 +1,29 @@
+version: '3.8'
+
 services:
   nginx:
-    image: nginx:latest
-    container_name: webserver-DMZ-nginx
+    image: nginx:alpine
     ports:
-      - "4433:443"
-      - "80:80"
+      - "8080:80"
     volumes:
-      - ./conf:/etc/nginx/conf.d:ro
-      - ./src:/usr/share/nginx/html
-    restart: always
+      - ./conf:/etc/nginx/conf.d/default.conf
+      - ./src:/var/www/html
     depends_on:
-      - mysql
+      - php
+
+  php:
+    build:
+      context: ./php
+    volumes:
+      - ./src:/var/www/html
 
   mysql:
-    image: mysql:8.0
-    container_name: webserver-DMZ-mysql
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: pass
     ports:
       - "3306:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: "#WeAreExclusive"
-      MYSQL_DATABASE: "loginDB"
-      MYSQL_USER: "webuser"
-      MYSQL_PASSWORD: "#WeAreExclusive"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    restart: always
-
-volumes:
-  mysql_data:
-    driver: local
-

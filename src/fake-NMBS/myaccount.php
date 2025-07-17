@@ -1,37 +1,37 @@
 <?php
-session_start(); // Start the session
-
+session_start(); 
 if (!isset($_SESSION['userName'])) {
     header('Location: mynmbs.php');
     exit();
 }
 
-$servername = "127.0.0.1";
-$username = "admin"; // use your MySQL username
-$password = "admin"; // use your MySQL password
-$dbname = "mydb";
+// Database connection
+$host   = 'mysql';    // in Docker use the service name
+$dbUser = 'admin';
+$dbPass = 'admin';
+$dbName = 'mydb';
 
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
+$conn = new mysqli($host, $dbUser, $dbPass, $dbName);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+// === VULNERABLE SQL INJECTION DUMP ===
+// take the raw session username (no escaping!)
 $userName = $_SESSION['userName'];
-$sql = "SELECT * FROM users WHERE username = '$userName'";
+
+// build an injectable query; the trailing -- comments out any rest
+$sql = "SELECT * FROM users WHERE email = '$userName' -- ";
 $result = $conn->query($sql);
 
+if ($result === false) {
+    die("SQL error: " . htmlentities($conn->error));
+}
 
-if ($result && $result->num_rows > 0) {
-    $row = $result->fetch_assoc();
-    $firstName = $row['first_name'];
-    $lastName = $row['last_name'];
-	$email = $row['email'];
-} else {
-    echo "User not found";
-    exit();
+// turn all returned rows into HTML
+$rows = [];
+while ($row = $result->fetch_assoc()) {
+    $rows[] = $row;
 }
 
 $conn->close();
@@ -187,6 +187,37 @@ nl        </a>
 </div>
     </div>
 </header>
+<main class="">
+    <div class="page__content">
+      <h1>Welkom <?php echo htmlentities($userName); ?>!</h1>
+      <p>Hieronder de volledige database dump op basis van je injectie:</p>
+
+      <?php if (count($rows) > 0): ?>
+        <table border="1" cellpadding="5" style="border-collapse:collapse;width:100%">
+          <thead>
+            <tr>
+              <?php foreach (array_keys($rows[0]) as $col): ?>
+                <th><?php echo htmlentities($col); ?></th>
+              <?php endforeach; ?>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($rows as $row): ?>
+              <tr>
+                <?php foreach ($row as $cell): ?>
+                  <td><?php echo htmlentities($cell); ?></td>
+                <?php endforeach; ?>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      <?php else: ?>
+        <p><em>Geen gebruikers gevonden.</em></p>
+      <?php endif; ?>
+    </div>
+
+    <!-- rest of your original page content… -->
+  </main>
 <div class="nav-sidebar__container nav-sidebar--navigation " style="">
     <div class="nav-sidebar__header">
         <div class="nav-sidebar__logo nav-sidebar--show-close">

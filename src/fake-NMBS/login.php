@@ -1,71 +1,63 @@
 <?php
+// ???????????????????????????????????
+// login.php
+// ???????????????????????????????????
+
+// 1) Start session (must be very first thing Ñ no BOM, no blank lines)
 session_start();
-if (!isset($_SESSION['userName'])) {
-    header('Location: login.php');
+
+// 2) DB connection (if you still need it for other checks; you can remove
+//    entirely if youÕre not actually validating credentials in this demo)
+$host   = 'mysql';
+$dbUser = 'admin';
+$dbPass = 'admin';
+$dbName = 'mydb';
+$conn   = new mysqli($host, $dbUser, $dbPass, $dbName);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// 3) Only on POST do we capture and redirect.
+//    We *do not* auto-redirect on every GET, so no loops:
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Grab your (injectable) username payload
+    $userInput = $_POST['userName'] ?? '';
+
+    // Store it in the session
+    $_SESSION['userName'] = $userInput;
+
+    // Jump to the dump page just once
+    header('Location: myaccount.php');
     exit;
 }
 
-$conn = new mysqli('mysql','admin','admin','mydb');
-if ($conn->connect_error) {
-    die("Connection failed: ".$conn->connect_error);
-}
-
-// ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
-// Change here: we no longer append a Ò--Ó comment.
-// Now we require you to close the email string and inject your OR.
-// A lone quote will produce a syntax error, not a full dump.
-// ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
-$userName = $_SESSION['userName'];
-
-// THIS is the vulnerable line:
-$sql = "SELECT * 
-          FROM users 
-         WHERE email    = '$userName' 
-           AND password = ''";
-
-$result = $conn->query($sql);
-
-// If you donÕt inject properly, youÕll get an error or no rows:
-if ($result === false) {
-    die("SQL error: " . htmlentities($conn->error));
-}
-
-// Fetch rows for display
-$rows = $result->fetch_all(MYSQLI_ASSOC);
-$conn->close();
+// 4) If weÕre here, itÕs a normal GET. Show the form.
 ?>
 <!DOCTYPE html>
 <html lang="nl">
 <head>
   <meta charset="utf-8">
-  <title>My NMBS Ð SQLi Dump</title>
+  <title>Fake NMBS Login</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; }
+    form { max-width: 300px; margin: auto; }
+    input, button { width: 100%; padding: .5rem; margin: .5rem 0; }
+  </style>
 </head>
 <body>
-  <h1>Welkom, <?php echo htmlentities($userName) ?></h1>
-  <p>Hieronder zie je de query en (alle) rijen als je een geldige SQL?injectie hebt gedaan:</p>
-
-  <pre><code><?php echo htmlentities($sql); ?></code></pre>
-
-  <?php if (count($rows)): ?>
-    <table border="1" cellpadding="5" style="border-collapse:collapse">
-      <thead>
-        <tr><?php foreach (array_keys($rows[0]) as $col): ?>
-          <th><?php echo htmlentities($col) ?></th>
-        <?php endforeach ?></tr>
-      </thead>
-      <tbody>
-        <?php foreach ($rows as $row): ?>
-          <tr>
-            <?php foreach ($row as $cell): ?>
-              <td><?php echo htmlentities($cell) ?></td>
-            <?php endforeach ?>
-          </tr>
-        <?php endforeach ?>
-      </tbody>
-    </table>
-  <?php else: ?>
-    <p><em>Geen rijen ontvangen.</em></p>
-  <?php endif; ?>
+  <h1>Login (SQLi demo)</h1>
+  <form method="post" action="login.php">
+    <label>
+      Email (injection point):<br>
+      <input type="text" name="userName" required>
+    </label>
+    <label>
+      Password (ignored):<br>
+      <input type="password" name="password" required>
+    </label>
+    <button type="submit">Submit</button>
+  </form>
+  <p><em>To dump the whole table, try: <code>' OR '1'='1</code></em></p>
 </body>
 </html>
 

@@ -6,10 +6,10 @@ if (!isset($_SESSION['userName'])) {
     exit();
 }
 
-$servername = "localhost";
-$username = "webuser"; // use your MySQL username
-$password = "@azertyuiop123"; // use your MySQL password
-$dbname = "loginDB";
+$servername = "127.0.0.1";
+$username = "admin"; // use your MySQL username
+$password = "admin"; // use your MySQL password
+$dbname = "mydb";
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -123,7 +123,7 @@ if(typeof window[n]!=="function"){window[n]=e;if(window.addEventListener){window
 <div class="navigation-bar__right">
     <ul class="navigation-bar__items">
                 <li class="navigation-bar__item LoginStatus">
-<a class="button navigation-bar__btn account account--loggedin" title="My&#32;NMBS" href="myaccount.php">    
+<a class="button navigation-bar__btn account account--loggedin" title="My&#32;NMBS" href="../fake-NMBS/myaccount.php">    
     <div class="account__name theme-purple">
         <?php echo strtoupper($firstName[0]); ?>
     </div>

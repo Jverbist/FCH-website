@@ -30,5 +30,9 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - mysql-data:/var/lib/mysql
       - ./src/fake-NMBS/mysql-init:/docker-entrypoint-initdb.d:ro
+
+
+
+volumes:
+  mysql-data:

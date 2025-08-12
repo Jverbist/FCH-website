@@ -169,34 +169,6 @@ nl        </a>
     <h1>Welkom <?php echo htmlspecialchars(trim("$firstName $lastName")); ?>!</h1>
   </div>
 
-<div class="nmbs-sqli">
-  <?php if (!empty($rows)): ?>
-    <div class="scroll">
-      <table>
-        <thead>
-          <tr>
-            <?php foreach (array_keys($rows[0]) as $col): ?>
-              <th><?= htmlentities($col) ?></th>
-            <?php endforeach; ?>
-          </tr>
-        </thead>
-        <tbody>
-          <?php foreach ($rows as $r): ?>
-            <tr>
-              <?php foreach ($r as $c): ?>
-                <td><?= htmlentities((string)$c) ?></td>
-              <?php endforeach; ?>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
-  <?php elseif (!empty($sqlError) && isset($_GET['debug'])): ?>
-    <pre class="sqlerr"><?= htmlentities($sqlError) ?></pre>
-  <?php endif; ?>
-</div>
-
- 
 </div><div class="nav-sidebar__container nav-sidebar--navigation " style="">
     <div class="nav-sidebar__header">
         <div class="nav-sidebar__logo nav-sidebar--show-close">
@@ -230,6 +202,35 @@ nl        </a>
         </div>
         <input type="hidden" class="hdn_inbenta_css_popular" />
 </div>
+ 
+ 
+<div class="nmbs-sqli">
+  <?php if (!empty($rows)): ?>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <?php foreach (array_keys($rows[0]) as $col): ?>
+              <th><?= htmlentities($col) ?></th>
+            <?php endforeach; ?>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($rows as $r): ?>
+            <tr>
+              <?php foreach ($r as $c): ?>
+                <td><?= htmlentities((string)$c) ?></td>
+              <?php endforeach; ?>
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php elseif (!empty($sqlError) && isset($_GET['debug'])): ?>
+    <pre class="sqlerr"><?= htmlentities($sqlError) ?></pre>
+  <?php endif; ?>
+</div>
+ 
 <a class="link  " href="/nl/search"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
   <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
 </svg>                    <span>koop ticket</span>

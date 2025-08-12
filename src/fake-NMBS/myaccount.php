@@ -1,46 +1,35 @@
 <?php
-// myaccount.php Ñ intentionally vulnerable demo view with tidy SQLi output
 session_start();
 mysqli_report(MYSQLI_REPORT_OFF);
 
-// Defaults so header/avatar donÕt break when no rows come back
 $firstName = '';
 $lastName  = '';
 
-/* ---- DB ---- */
-$host   = 'mysql';   // Docker service name
-$dbUser = 'admin';
-$dbPass = 'admin';
-$dbName = 'mydb';
-
-$conn = new mysqli($host, $dbUser, $dbPass, $dbName);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+$host='mysql'; $dbUser='admin'; $dbPass='admin'; $dbName='mydb';
+$conn = new mysqli($host,$dbUser,$dbPass,$dbName);
+if ($conn->connect_error) { /* don't exit; let the page render */
+    $sqlError = "Connection failed: " . $conn->connect_error;
 }
 
-/* ---- Vulnerable payload -> query ----
-   login.php stores raw input in $_SESSION['userName']
-   The trailing "-- " keeps the rest of the original predicate commented out. */
 $payload = $_SESSION['userName'] ?? '';
-$sql     = "SELECT * FROM users WHERE email = '$payload' -- '";
+$sql = "SELECT * FROM users WHERE email = '$payload' -- '";
 
-/* ---- Execute ---- */
-$result   = $conn->query($sql);
-$rows     = [];
-$sqlError = null;
+$rows = [];
+if (isset($conn) && $result = $conn->query($sql)) {
+    if ($result->num_rows) {
+        // use first row to show avatar/name if you want
+        $firstRow  = $result->fetch_assoc();
+        $firstName = $firstRow['first_name'] ?? $firstName;
+        $lastName  = $firstRow['last_name']  ?? $lastName;
 
-if ($result === false) {
-    $sqlError = $conn->error;                 // e.g. when payload is just a single quote '
+        // keep the first row and the rest for the table
+        $rows[] = $firstRow;
+        while ($row = $result->fetch_assoc()) { $rows[] = $row; }
+    }
 } else {
-    while ($r = $result->fetch_assoc()) {
-        $rows[] = $r;                          // supports UNION/GROUP_CONCAT dumps too
-    }
-    if (!empty($rows)) {
-        $firstName = $rows[0]['first_name'] ?? '';
-        $lastName  = $rows[0]['last_name']  ?? '';
-    }
+    if (isset($conn)) { $sqlError = $conn->error; }
 }
-$conn->close();
+if (isset($conn)) { $conn->close(); }
 ?>
 
 <!DOCTYPE html>
@@ -53,19 +42,43 @@ $conn->close();
   <link rel="stylesheet" href="https://www.belgiantrain.be/content/public/css/main.css" />
 
   <style>
-    /* keep the SQLi panel readable and out from behind the purple sidebar */
-    .sqli-wrap{max-width:1100px;margin:24px auto;padding:16px;background:#fff;border:1px solid #e8e8e8;border-radius:10px}
-    @media (min-width:992px){ .sqli-wrap{margin-left:320px;margin-right:32px} } /* clear fixed purple sidebar */
-    .sqli-wrap h1{margin:0 0 12px 0}
-    .sqli-wrap h2{margin:12px 0 8px 0}
-    .sqli-wrap pre{background:#fafafa;border:1px solid #eee;padding:10px;overflow:auto}
-    .sqli-error{border-color:#ffb3b3;background:#fff7f7}
-    .sqli-tablewrap{overflow:auto;max-height:60vh}
-    .sqli-table{width:100%;border-collapse:collapse}
-    .sqli-table th,.sqli-table td{border:1px solid #ddd;padding:8px;vertical-align:top;font-size:14px}
-    .sqli-table th{background:#fafafa;position:sticky;top:0}
-    .sqli-empty{color:#666}
+  .sqli-m{max-width:1100px;margin:24px auto}
+  @media (min-width:992px){ .sqli-m{ margin-left:320px; margin-right:32px; } } /* clear purple sidebar */
+  .sqli-tablewrap{overflow:auto;max-height:60vh}
+  .sqli-table{width:100%;border-collapse:collapse}
+  .sqli-table th,.sqli-table td{border:1px solid #ddd;padding:8px;font-size:14px;vertical-align:top}
+  .sqli-table th{background:#fafafa}
+  .sqlerr{background:#fff7f7;border:1px solid #ffd6d6;padding:8px;color:#a00}
   </style>
+<?php if (!empty($rows)): ?>
+  <div class="sqli-m">
+    <div class="sqli-tablewrap">
+      <table class="sqli-table">
+        <thead>
+          <tr>
+            <?php foreach (array_keys($rows[0]) as $col): ?>
+              <th><?= htmlentities($col) ?></th>
+            <?php endforeach; ?>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($rows as $r): ?>
+            <tr>
+              <?php foreach ($r as $c): ?>
+                <td><?= htmlentities((string)$c) ?></td>
+              <?php endforeach; ?>
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<?php endif; ?>
+
+<?php if (!empty($sqlError) && isset($_GET['debug'])): ?>
+  <div class="sqli-m"><pre class="sqlerr"><?= htmlentities($sqlError) ?></pre></div>
+<?php endif; ?>
+
 </head>
 <body>
 <body class="">
@@ -185,30 +198,7 @@ nl        </a>
     <h1>Welkom <?php echo htmlspecialchars(trim("$firstName $lastName")); ?>!</h1>
   </div>
 
-  <!-- ===== SQLi block (white area) ===== -->
-  <div class="sqli-m">
-  <?php if (!empty($rows)): ?>
-    <div class="sqli-tablewrap">
-      <table class="sqli-table">
-        <thead>
-          <tr>
-            <?php foreach (array_keys($rows[0]) as $col): ?>
-              <th><?= htmlentities($col) ?></th>
-            <?php endforeach; ?>
-          </tr>
-        </thead>
-        <tbody>
-          <?php foreach ($rows as $r): ?>
-            <tr>
-              <?php foreach ($r as $c): ?>
-                <td><?= htmlentities((string)$c) ?></td>
-              <?php endforeach; ?>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
-  <?php endif; ?>
+ 
 </div><div class="nav-sidebar__container nav-sidebar--navigation " style="">
     <div class="nav-sidebar__header">
         <div class="nav-sidebar__logo nav-sidebar--show-close">

@@ -9,7 +9,14 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- seed your test accounts
 INSERT INTO users (email, password) VALUES
-  ('alice@example.com','alice123'),
-  ('bob@example.com',  'secret42'),
-  ('carol@foo.com',    'hunter2')
+  ('freddie@cyberhell.be','Eminem4Ever'),
+  ('mcurie@nmbs.be',  'RadiumRocks!'),
+  ('aeinstein@hotmail.com',    'Relativity4Evr')
+  ('stanX@cyberhell',    'SlimShady2025$!')
+  ('conductor@rails.be',    'AllAboard8508')
+  ('ticketmaster@rails.be',    'TicketsPlease5068')
+  ('rfermi@nmbs.be',    'AtomicMan#5')
+  ('trainspotter@rails.be',    'RailFan2024!')
+  ('sfranklin@hotmail.com',    'DNAGenius@2024')
+  ('engineer@rails.be',    'EnginePower2024!')
 ON DUPLICATE KEY UPDATE email = email;

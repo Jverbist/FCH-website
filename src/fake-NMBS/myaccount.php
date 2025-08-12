@@ -1,49 +1,137 @@
 <?php
-// myaccount.php
+// myaccount.php Ñ runs the intentionally vulnerable query and renders results nicely
 
 session_start();
-if (!isset($_SESSION['userName'])) {
-    // No payload? Go back to the form
-    header('Location: login.php');
-    exit;
-}
 
-// 1) Connect to MySQL
-$mysqli = new mysqli('mysql', 'admin', 'admin', 'mydb');
-if ($mysqli->connect_error) {
-    die("DB Connection failed: " . htmlentities($mysqli->connect_error));
-}
-
-// 2) Disable automatic exceptions so we can handle bad syntax
+// Avoid mysqli throwing fatal exceptions; we want to capture the SQL error text.
 mysqli_report(MYSQLI_REPORT_OFF);
 
-$userName = $_SESSION['userName'];
+// Defaults so header/avatar donÕt break when payload returns no rows.
+$firstName = '';
+$lastName  = '';
 
-// 3) Build your injectable query. Everything after the `-- ` is ignored.
-$sql = "SELECT * 
-          FROM users 
-         WHERE email = '$userName' 
-           -- ";
+$host   = 'mysql';   // Docker service name
+$dbUser = 'admin';
+$dbPass = 'admin';
+$dbName = 'mydb';
 
-// 4) Run it
-$result = $mysqli->query($sql);
-if ($result === false) {
-    // Syntax error (e.g. you typed only a lone quote)
-    echo "<h1>SQL Syntax Error</h1>";
-    echo "<p>Payload: <code>" . htmlentities($userName) . "</code></p>";
-    echo "<pre><code>" . htmlentities($mysqli->error) . "</code></pre>";
-    exit;
+$conn = new mysqli($host, $dbUser, $dbPass, $dbName);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
 }
 
-// 5) Fetch all rows (when your injection succeeded)
-$rows = $result->fetch_all(MYSQLI_ASSOC);
-$mysqli->close();
+/**
+ * Take raw payload from login.php (kept intentionally un-sanitized).
+ * The crafted comment `-- ` allows classic injections exactly as in your steps.
+ */
+$payload = $_SESSION['userName'] ?? '';
+$sql = "SELECT * FROM users WHERE email = '$payload' -- '";
+
+// Run vulnerable query
+$result = $conn->query($sql);
+
+// Build HTML block shown in the white area
+$sqliDumpHtml = '';
+if ($result === false) {
+    // Step 1 expectation: a lone `'` shows a SQL error
+    $sqliDumpHtml = '
+        <div class="sqli-dump sqli-error">
+            <h2>Injected query error</h2>
+            <div class="sqli-tip">Payload: <code>'.htmlspecialchars($payload).'</code></div>
+            <pre>'.htmlspecialchars($conn->error).'</pre>
+        </div>';
+} else {
+    if ($result->num_rows > 0) {
+        // Use first row to populate welcome text
+        $firstRow  = $result->fetch_assoc();
+        $firstName = $firstRow['first_name'] ?? '';
+        $lastName  = $firstRow['last_name']  ?? '';
+
+        // Render a nice scrollable table with all returned rows
+        $cols = array_keys($firstRow);
+        $thead = '';
+        foreach ($cols as $c) { $thead .= '<th>'.htmlspecialchars($c).'</th>'; }
+
+        $tbody = '<tr>';
+        foreach ($cols as $c) { $tbody .= '<td>'.htmlspecialchars((string)$firstRow[$c]).'</td>'; }
+        $tbody .= '</tr>';
+
+        while ($row = $result->fetch_assoc()) {
+            $tbody .= '<tr>';
+            foreach ($cols as $c) {
+                $tbody .= '<td>'.htmlspecialchars((string)$row[$c]).'</td>';
+            }
+            $tbody .= '</tr>';
+        }
+
+        $sqliDumpHtml = '
+            <div class="sqli-dump">
+                <h2>Injected query res<style>
+    body{font:16px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;background:#fff;color:#222}
+    header{padding:24px 16px;border-bottom:1px solid #eee;position:sticky;top:0;background:#fff}
+    .container{max-width:1200px;margin:0 auto;padding:0 16px}
+    .welcome{font-size:28px;margin:0}
+    .account__name{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#6b2ea1;color:#fff;font-weight:700;margin-right:8px}
+    /* SQLi dump panel */
+    .sqli-dump{max-width:1100px;margin:24px auto;padding:16px;background:#fff;border:1px solid #e8e8e8;border-radius:10px}
+    @media (min-width: 992px){ .sqli-dump{ margin-left:320px; margin-right:32px; } } /* clear fixed purple sidebar */
+    .sqli-error{border-color:#ffb3b3;background:#fff7f7}
+    .sqli-tip{font-size:13px;color:#666;margin:6px 0 10px}
+    .sqli-tablewrap{overflow:auto;max-height:60vh}
+    .sqli-table{width:100%;border-collapse:collapse}
+    .sqli-table th,.sqli-table td{border:1px solid #ddd;padding:8px;vertical-align:top;font-size:14px}
+    .sqli-table th{background:#fafafa;position:sticky;top:0}
+    .sqli-empty{color:#666}
+    .sqli-note{font-size:12px;color:#666;margin-top:10px}
+  </style>ult</h2>
+                <div class="sqli-tip">
+                    Payload: <code>'.htmlspecialchars($payload).'</code>
+                </div>
+                <div class="sqli-tablewrap">
+                    <table class="sqli-table">
+                        <thead><tr>'.$thead.'</tr></thead>
+                        <tbody>'.$tbody.'</tbody>
+                    </table>
+                </div>
+                <p class="sqli-note">
+                    Try UNION enumeration and GROUP_CONCAT payloads here; this table will show whatever the DB returns.
+                </p>
+            </div>';
+    } else {
+        $sqliDumpHtml = '
+            <div class="sqli-dump">
+                <h2>Injected query result</h2>
+                <div class="sqli-tip">Payload: <code>'.htmlspecialchars($payload).'</code></div>
+                <div class="sqli-empty">No rows returned.</div>
+            </div>';
+    }
+}
+
+$conn->close();
 ?>
 
 <!DOCTYPE html>
 <html lang="nl" xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>My NMBS: Je klantenprofiel | NMBS</title>
+<style>
+    body{font:16px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;background:#fff;color:#222}
+    header{padding:24px 16px;border-bottom:1px solid #eee;position:sticky;top:0;background:#fff}
+    .container{max-width:1200px;margin:0 auto;padding:0 16px}
+    .welcome{font-size:28px;margin:0}
+    .account__name{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#6b2ea1;color:#fff;font-weight:700;margin-right:8px}
+    /* SQLi dump panel */
+    .sqli-dump{max-width:1100px;margin:24px auto;padding:16px;background:#fff;border:1px solid #e8e8e8;border-radius:10px}
+    @media (min-width: 992px){ .sqli-dump{ margin-left:320px; margin-right:32px; } } /* clear fixed purple sidebar */
+    .sqli-error{border-color:#ffb3b3;background:#fff7f7}
+    .sqli-tip{font-size:13px;color:#666;margin:6px 0 10px}
+    .sqli-tablewrap{overflow:auto;max-height:60vh}
+    .sqli-table{width:100%;border-collapse:collapse}
+    .sqli-table th,.sqli-table td{border:1px solid #ddd;padding:8px;vertical-align:top;font-size:14px}
+    .sqli-table th{background:#fafafa;position:sticky;top:0}
+    .sqli-empty{color:#666}
+    .sqli-note{font-size:12px;color:#666;margin-top:10px}
+  </style>
 <!-- Adobe Static Data Layer -->
 <script>
 dataLayer = [{event: "pageload", environment: "www.belgiantrain.be", platform: "desktop", page: {
@@ -1649,7 +1737,7 @@ nl        </a>
     </div>
     <div class="page__content">
         
-
+    <?php echo $sqliDumpHtml; ?>
 
     <div class="well theme-light">
         <div class="wrapper">

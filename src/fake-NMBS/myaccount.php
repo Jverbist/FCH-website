@@ -186,44 +186,30 @@ nl        </a>
   </div>
 
   <!-- ===== SQLi block (white area) ===== -->
-  <div class="sqli-wrap <?php echo $sqlError ? 'sqli-error' : ''; ?>">
-    <h1>SQLi Dump</h1>
-
-    <h2>Executed Query</h2>
-    <pre><code><?php echo htmlentities($sql); ?></code></pre>
-
-    <?php if ($sqlError): ?>
-      <h2>Database error</h2>
-      <pre><code><?php echo htmlentities($sqlError); ?></code></pre>
-    <?php else: ?>
-      <?php if (count($rows)): ?>
-        <h2>Returned Rows (<?php echo count($rows); ?>)</h2>
-        <div class="sqli-tablewrap">
-          <table class="sqli-table">
-            <thead>
-              <tr>
-                <?php foreach (array_keys($rows[0]) as $col): ?>
-                  <th><?php echo htmlentities($col); ?></th>
-                <?php endforeach; ?>
-              </tr>
-            </thead>
-            <tbody>
-              <?php foreach ($rows as $r): ?>
-                <tr>
-                  <?php foreach ($r as $c): ?>
-                    <td><?php echo htmlentities((string)$c); ?></td>
-                  <?php endforeach; ?>
-                </tr>
+  <div class="sqli-m">
+  <?php if (!empty($rows)): ?>
+    <div class="sqli-tablewrap">
+      <table class="sqli-table">
+        <thead>
+          <tr>
+            <?php foreach (array_keys($rows[0]) as $col): ?>
+              <th><?= htmlentities($col) ?></th>
+            <?php endforeach; ?>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($rows as $r): ?>
+            <tr>
+              <?php foreach ($r as $c): ?>
+                <td><?= htmlentities((string)$c) ?></td>
               <?php endforeach; ?>
-            </tbody>
-          </table>
-        </div>
-      <?php else: ?>
-        <p class="sqli-empty"><em>No rows returned.</em></p>
-      <?php endif; ?>
-    <?php endif; ?>
-  </div>
-  <!-- ===== /SQLi block ===== --><div class="nav-sidebar__container nav-sidebar--navigation " style="">
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php endif; ?>
+</div><div class="nav-sidebar__container nav-sidebar--navigation " style="">
     <div class="nav-sidebar__header">
         <div class="nav-sidebar__logo nav-sidebar--show-close">
 <a href="https://www.nmbs.exn.be/NMBS/www.belgiantrain.be/nl.html" class="navigation-bar__logo">

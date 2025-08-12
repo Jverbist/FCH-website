@@ -1,15 +1,13 @@
 <?php
-// myaccount.php � runs the intentionally vulnerable query and renders results nicely
-
+// myaccount.php � intentionally vulnerable demo view with tidy SQLi output
 session_start();
-
-// Avoid mysqli throwing fatal exceptions; we want to capture the SQL error text.
 mysqli_report(MYSQLI_REPORT_OFF);
 
-// Defaults so header/avatar don�t break when payload returns no rows.
+// Defaults so header/avatar don�t break when no rows come back
 $firstName = '';
 $lastName  = '';
 
+/* ---- DB ---- */
 $host   = 'mysql';   // Docker service name
 $dbUser = 'admin';
 $dbPass = 'admin';
@@ -20,10 +18,2884 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-/**
- * Take raw payload from login.php (kept intentionally un-sanitized).
- * The crafted comment `-- ` allows classic injections exactly as in your steps.
- */
+/* ---- Vulnerable payload -> query ----
+   login.php stores raw input in $_SESSION['userName']
+   The trailing "-- " keeps the rest of the original predicate commented out. */
+$payload = $_SESSION['userName'] ?? '';
+$sql     = "SELECT * FROM users WHERE email = '$payload' -- '";
+
+/* ---- Execute ---- */
+$result   = $conn->query($sql);
+$rows     = [];
+$sqlError = null;
+
+if ($result === false) {
+    $sqlError = $conn->error;                 // e.g. when payload is just a single quote '
+} else {
+    while ($r = $result->fetch_assoc()) {
+        $rows[] = $r;                          // supports UNION/GROUP_CONCAT dumps too
+    }
+    if (!empty($rows)) {
+        $firstName = $rows[0]['first_name'] ?? '';
+        $lastName  = $rows[0]['last_name']  ?? '';
+    }
+}
+$conn->close();
+?>
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <title>My NMBS: Je klantenprofiel | NMBS</title>
+
+  <!-- NMBS stylesheet (keep using yours if you already include it) -->
+  <link rel="stylesheet" href="https://www.belgiantrain.be/content/public/css/main.css" />
+
+  <style>
+    /* keep the SQLi panel readable and out from behind the purple sidebar */
+    .sqli-wrap{max-width:1100px;margin:24px auto;padding:16px;background:#fff;border:1px solid #e8e8e8;border-radius:10px}
+    @media (min-width:992px){ .sqli-wrap{margin-left:320px;margin-right:32px} } /* clear fixed purple sidebar */
+    .sqli-wrap h1{margin:0 0 12px 0}
+    .sqli-wrap h2{margin:12px 0 8px 0}
+    .sqli-wrap pre{background:#fafafa;border:1px solid #eee;padding:10px;overflow:auto}
+    .sqli-error{border-color:#ffb3b3;background:#fff7f7}
+    .sqli-tablewrap{overflow:auto;max-height:60vh}
+    .sqli-table{width:100%;border-collapse:collapse}
+    .sqli-table th,.sqli-table td{border:1px solid #ddd;padding:8px;vertical-align:top;font-size:14px}
+    .sqli-table th{background:#fafafa;position:sticky;top:0}
+    .sqli-empty{color:#666}
+  </style>
+</head>
+<body>
+<body class="">
+    <input id="facebookShareUrl" name="FacebookShareUrl" type="hidden" value="https://www.facebook.com/dialog/share" />
+<input id="facebookShareAppId" name="FacebookShareAppId" type="hidden" value="3526921284007626" />
+<input id="twitterShareUrl" name="TwitterShareUrl" type="hidden" value="https://twitter.com/intent/tweet" />
+<header id="top-navigation-bar" class="navigation-bar" style="">
+    <div class="navigation-bar__sidebar bg-purple">
+<a href="https://www.nmbs.exn.be/NMBS/www.belgiantrain.be/nl.html" class="navigation-bar__logo">
+    <svg class="icon" data-id="{E42B7874-C7FD-48A9-85B5-301F11A48923}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-nmbs-logo" />
+</svg>
+    <span class="sr-only">Home NMBS</span>
+</a>
+    </div>
+    <div class="navigation-bar__main">
+        <div class="navigation-bar__left">
+<ul class="navigation-bar__items">
+                <li class="navigation-bar__item ">
+                    <a class="navigation-bar__item-link " href="/nl/search">ticket kopen</a>
+                </li>
+                <li class="navigation-bar__item ">
+                    <a class="navigation-bar__item-link " href="/nl/support/customer-service">klantendienst</a>
+                </li>
+                <li class="navigation-bar__item ">
+                    <a class="navigation-bar__item-link " href="/nl/mobility-for-business/for-employers">business</a>
+                </li>
+                <li class="navigation-bar__item ">
+                    <a href="https://jobs.belgiantrain.be/?locale=nl_NL" rel="noopener noreferrer" class="navigation-bar__item-link " target="_blank">jobs</a>
+                </li>
+</ul>
+        </div>
+<div class="navigation-bar__right">
+    <ul class="navigation-bar__items">
+                <li class="navigation-bar__item LoginStatus">
+<a class="button navigation-bar__btn account account--loggedin" title="My&#32;NMBS" href="../fake-NMBS/myaccount.php">    
+    <div class="account__name theme-purple">
+        <?php echo strtoupper($firstName[0]); ?>
+    </div>
+    <div class="account__label">
+        My NMBS
+    </div>
+</a>
+                </li>
+                <li class="navigation-bar__item InbentaSearchNavigationButton">
+<div class="navigation-bar__btn navigation-bar__search">
+    <a href="/nl/support/search-website" title="Zoek op de website" class="color-shade-dark">
+        <svg class="icon" data-id="{7638E5EA-45EF-422B-ABDB-89D5119A191B}" focusable="false" role="img">
+  <title>Zoek op de website</title>
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-search" />
+</svg>
+        <span class="sr-only">Zoek op de website</span>
+    </a>
+</div>
+                </li>
+                <li class="navigation-bar__item BasketButton">
+<a class="navigation-bar__btn basket-btn" href="/nl/search" title="Winkelmandje">
+    <svg class="icon" data-id="{E0EDF48D-D199-478A-8F3D-2B57DE5B4BA1}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-basket" />
+</svg>
+    <span class="sr-only">Winkelmandje</span>
+    <div class="basket-status">
+    </div>
+</a>
+                </li>
+                <li class="navigation-bar__item LanguageSwitchDropDown">
+<div class="navigation-bar__item-langswitch">
+    <div class="js-dropdown dropdown dropdown--outline" data-autoclose="true">
+        <a href="#" class="link link--iconright dropdown__trigger" aria-expanded="false">
+            <svg class="icon icon--12 icon--dropdown" data-id="{2C0D660B-B0ED-405A-A664-82F692588137}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-down" />
+</svg>
+nl        </a>
+        <ul class="dropdown__list">
+                <li class="dropdown__item">
+                    <a href="/fr/my-account">fr</a>
+                </li>
+                <li class="dropdown__item">
+                    <a href="/en/my-account">en</a>
+                </li>
+                <li class="dropdown__item">
+                    <a href="/de/my-account">de</a>
+                </li>
+        </ul>
+    </div>
+</div>
+                </li>
+                <li class="navigation-bar__item MainMenuButton">
+                    <button class="navigation-bar__btn menu js-open-navigation" title="Open het menu">
+    <div class="menu__label">Menu</div>
+    <svg class="icon menu__icon" data-id="{71012470-03F3-4B9E-9618-BFB1E91C4175}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-menu" />
+</svg>
+</button>
+                </li>
+    </ul>
+</div>
+    </div>
+</header>
+<header class="navigation-bar">
+    <div class="navigation-bar__main">
+      <ul class="navigation-bar__items">
+        <li class="navigation-bar__item">
+          <a class="button navigation-bar__btn account account--loggedin" href="myaccount.php">
+            <div class="account__name theme-purple">
+              <?php $initial = $firstName !== '' ? strtoupper(substr($firstName,0,1)) : '?'; echo $initial; ?>
+            </div>
+            <div class="account__label">My NMBS</div>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- Welcome banner -->
+  <div class="container" style="margin-top:16px">
+    <h1>Welkom <?php echo htmlspecialchars(trim("$firstName $lastName")); ?>!</h1>
+  </div>
+
+  <!-- ===== SQLi block (white area) ===== -->
+  <div class="sqli-wrap <?php echo $sqlError ? 'sqli-error' : ''; ?>">
+    <h1>SQLi Dump</h1>
+
+    <h2>Executed Query</h2>
+    <pre><code><?php echo htmlentities($sql); ?></code></pre>
+
+    <?php if ($sqlError): ?>
+      <h2>Database error</h2>
+      <pre><code><?php echo htmlentities($sqlError); ?></code></pre>
+    <?php else: ?>
+      <?php if (count($rows)): ?>
+        <h2>Returned Rows (<?php echo count($rows); ?>)</h2>
+        <div class="sqli-tablewrap">
+          <table class="sqli-table">
+            <thead>
+              <tr>
+                <?php foreach (array_keys($rows[0]) as $col): ?>
+                  <th><?php echo htmlentities($col); ?></th>
+                <?php endforeach; ?>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($rows as $r): ?>
+                <tr>
+                  <?php foreach ($r as $c): ?>
+                    <td><?php echo htmlentities((string)$c); ?></td>
+                  <?php endforeach; ?>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php else: ?>
+        <p class="sqli-empty"><em>No rows returned.</em></p>
+      <?php endif; ?>
+    <?php endif; ?>
+  </div>
+  <!-- ===== /SQLi block ===== --><div class="nav-sidebar__container nav-sidebar--navigation " style="">
+    <div class="nav-sidebar__header">
+        <div class="nav-sidebar__logo nav-sidebar--show-close">
+<a href="https://www.nmbs.exn.be/NMBS/www.belgiantrain.be/nl.html" class="navigation-bar__logo">
+    <svg class="icon" data-id="{E42B7874-C7FD-48A9-85B5-301F11A48923}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-nmbs-logo" />
+</svg>
+    <span class="sr-only">Home NMBS</span>
+</a>
+<a href="#" class="nav-sidebar__btn-close link link--iconright">
+    <svg class="icon  icon--12" data-id="{5FD39E00-7D22-44B2-8210-5CFDACCFA9E9}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-close" />
+</svg>
+    Sluiten
+</a>
+<a href="#" class="nav-sidebar__btn-back link">
+    <svg class="icon  icon--12" data-id="{52732675-6DB6-43F4-9B1D-7076D1FB19D2}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-left" />
+</svg>
+    Terug
+</a>
+        </div>
+<div class="nav-sidebar__cta only--small theme-blue">
+<div class="inbenta-nmbs">
+    <!-- PE html -->
+        <!-- Element where the SDK and KM will be displayed -->
+        <div id="inbenta">
+            <div id="search-boxsh"></div>
+<div id="autocompletersh"></div>
+<div id="resultssh"></div>
+        </div>
+        <input type="hidden" class="hdn_inbenta_css_popular" />
+</div>
+<a class="link  " href="/nl/search"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>                    <span>koop ticket</span>
+</a><a class="link  " href="https://m.me/NMBS"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>                    <span>hulp nodig?</span>
+</a></div>
+    </div>
+<aside class="nav-sidebar">
+    <div class="nav-sidebar__block">
+        <div class="nav-sidebar__content">
+            <ul class="navigation__list">
+                    <li class="active">
+                        <a href="#" data-id="Reisinfo">Reisinfo</a>
+                    </li>
+                    <li >
+                        <a href="#" data-id="Tickets &amp; abonnementen">Tickets &amp; abonnementen</a>
+                    </li>
+                    <li >
+                        <a href="#" data-id="Stationsinformatie">Stationsinformatie</a>
+                    </li>
+                    <li >
+                        <a href="#" data-id="Reisideeën">Reisideeën</a>
+                    </li>
+                    <li >
+                        <a href="#" data-id="Voor werkgevers en werknemers">Voor werkgevers en werknemers</a>
+                    </li>
+                    <li >
+                        <a href="#" data-id="Internationale reizen">Internationale reizen</a>
+                    </li>
+                    <li >
+                        <a href="#" data-id="Klantendienst">Klantendienst</a>
+                    </li>
+                    <li >
+                        <a href="#" data-id="Diensten voor derden en RRS">Diensten voor derden en RRS</a>
+                    </li>
+                    <li >
+                        <a href="#" data-id="Jobs">Jobs</a>
+                    </li>
+                    <li >
+                        <a href="#" data-id="Over NMBS">Over NMBS</a>
+                    </li>
+            </ul>
+        </div>
+
+        <div class="nav-sidebar__footer">
+            <div class="nav-sidebar__baseline nav-sidebar__baseline--white"></div>
+        </div>
+    </div>
+</aside>
+
+<section class="nav-sidebar-panel  nav-sidebar-panel--navigation  js-panel  nav-sidebar-panel--large  nav-sidebar-panel--fixed-open ">
+    <a href="javascript:void(0);" class="link  link--iconright  nav-sidebar-panel__close  sidebar__btn-close">
+        <svg class="icon icon--12" data-id="{5FD39E00-7D22-44B2-8210-5CFDACCFA9E9}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-close" />
+</svg>
+        Sluiten
+    </a>
+    <div class="nav-sidebar-panel__content js-panel-content">
+<div class="inbenta-nmbs">
+
+    <!-- PE html -->
+        <!-- Element where the SDK and KM will be displayed -->
+        <div id="inbenta">
+            <div id="search-boxsh"></div>
+<div id="autocompletersh"></div>
+<div id="resultssh"></div>
+
+        </div>
+        <input type="hidden" class="hdn_inbenta_css_popular" />
+</div>
+                    <div class="navigation__panel-item active" data-id="Reisinfo" style=opacity:1>
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Reisinfo </h4>
+                            </div>
+                        </div>
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Actueel</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/current/ongoing-disturbances-and-works" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>storingen en werken</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/current/current-departure-times" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>realtime dienstregeling</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.belgiantrain.be/nl/support/customer-service/delay-certificate" class="link"><svg class="icon icon--12" data-id="{9AD7865D-2AAF-48BC-92CF-F5C2F69DADC9}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-external" />
+</svg>vertragingsattest</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Diensten in de trein</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/bike-ticket" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>met de fiets op de trein</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/services-in-the-train/first-or-second-class" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>reizen in 1e of 2e klas</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/services-in-the-train/luggage-and-pets" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>reizen met bagage en huisdieren</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Je reis voorbereiden</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/prepare-for-your-journey/assistance-reduced-mobility" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>reizigers met beperkte mobiliteit</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/prepare-for-your-journey/leaflets" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>brochures dienstregeling en netkaart</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/train-offer/welcome-in-belgium-train" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>hoe door België reizen met de trein</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/airports" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>reizen naar de luchthaven</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/nmbs-stations/payment-methods" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>betaalmogelijkheden</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/prepare-for-your-journey/use-the-sncb-app" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>ontdek de NMBS-app</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Multimodaliteit</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/from-and-to-the-station/connections-with-tram-bus-subway" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>trein + bus/tram/metro</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/train-and-other-transport/train-bike" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>trein + fiets</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/train-and-other-transport/train-car" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>trein + auto</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/train-offer/s-train" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>S-trein : in en rond de stad</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation__panel-item " data-id="Tickets &amp; abonnementen" >
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Tickets &amp; abonnementen </h4>
+                            </div>
+                        </div>
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/search" class="link"><svg class="icon icon--12" data-id="{930BC4B7-9624-49A6-BB8B-80939E12C7CE}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-standard" />
+</svg>koop je ticket</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/book-your-abonnement-online" class="link"><svg class="icon icon--12" data-id="{65BD7BF9-43C7-46FF-B8A4-7BE4ED362D6B}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-abo-traject" />
+</svg>koop een nieuw abonnement</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/renew-my-abonnement" class="link"><svg class="icon icon--12" data-id="{9845AA3A-40ED-4B6D-B2FB-5DBF922164B1}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-abo-citywide" />
+</svg>verleng je huidige abonnement</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Tickets &amp; abonnementen</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/overview-products/young-child" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>kinderen (-12 jaar) en jongeren (-26 jaar)</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/overview-products/adult-senior" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>volwassenen (26+) en senioren (65+)</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/abonnement" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>treinabonnementen en combi-abo's</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/groups" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>groepsreizen</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/overview-discount" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>individuele voordelen</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Supplementen</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/class-upgrade" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>klasverhoging</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/bike-ticket" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>fiets supplement</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/pet-ticket" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>huisdier supplement</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Voordeeltickets voor uitstapjes</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/leisure/discovery-ticket" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Discovery Ticket</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/leisure/music-events" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Bravo! Ticket, festival- en concerttickets          </a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Luchthavens</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/airports/brussels-airport" class="link"><svg class="icon icon--12" data-id="{060E2D0A-9075-4C10-BBF5-0CEDCE76B99C}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-airport" />
+</svg>Brussels Airport</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/airports/charleroi-airport" class="link"><svg class="icon icon--12" data-id="{060E2D0A-9075-4C10-BBF5-0CEDCE76B99C}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-airport" />
+</svg>Charleroi Airport</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Reizen buiten België</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/overview-products/outside-belgium" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>grensbestemmingen</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL?utm_campaign=helloeurope&amp;utm_medium=referral-internal&amp;utm_source=belgiantrain.be&amp;utm_content=menulink_nl_outside-belgium" class="link"><svg class="icon icon--12" data-id="{9AD7865D-2AAF-48BC-92CF-F5C2F69DADC9}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-external" />
+</svg>binnen Europa</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Parking</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/car-or-bike-at-station/b-parking" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>auto</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/car-or-bike-at-station/b-parking-bike" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>fiets</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation__panel-item " data-id="Stationsinformatie" >
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Stationsinformatie </h4>
+                            </div>
+                        </div>
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>NMBS-stations</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>zoek een station</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Parkeren aan het station</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/car-or-bike-at-station/b-parking" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>autoparkings</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/car-or-bike-at-station/b-parking-bike" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>fietsparkings</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Diensten in het station</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/prepare-for-your-journey/assistance-reduced-mobility" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>assistentie aanvragen voor reizigers met beperkte mobiliteit</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/nmbs-stations/how-do-ticket-vending-machines-work" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>hoe werkt de automaat in het station</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/nmbs-stations/luggage-storage" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>bagagekluizen</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/nmbs-stations/free-wifi" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>wifi in het station</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/car-or-bike-at-station/rent-a-bike-at-the-station" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>huur een fiets aan het station</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/car-or-bike-at-station/rent-a-car-at-the-station" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>huur een auto aan het station</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Regels en veiligheid</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/nmbs-stations/station-regulations" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>stationsreglement</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/security/security-in-society" class="link"><svg class="icon icon--12" data-id="{FAF7212D-3C77-4717-AEBD-67B4D93909F5}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-phone" />
+</svg>0800/30 230 - veiligheid in het station en op de trein</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation__panel-item " data-id="Reisideeën" >
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Reisideeën </h4>
+                            </div>
+                        </div>
+
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/search" class="link"><svg class="icon icon--12" data-id="{930BC4B7-9624-49A6-BB8B-80939E12C7CE}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-standard" />
+</svg>koop je ticket</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>(Her)ontdek België</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-ideas/inspiration/discover-belgium" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>de leukste activiteiten van het moment</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-ideas/inspiration/nmbs-sncb-blog" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>NMBS-blog: de beste reisideeën</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Uitstapjes</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/leisure/discovery-ticket" class="link"><svg class="icon icon--12" data-id="{6C0B88D3-273A-4989-84FE-846C7F93A067}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-b-day-sensation" />
+</svg>dierenparken, pretparken en musea</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/leisure/music-events" class="link"><svg class="icon icon--12" data-id="{02DD7FBB-2BFA-4693-99E3-68B91214C6B8}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-music" />
+</svg>festivals en concerten </a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/leisure/b-excursions/more/happy-trip" class="link"><svg class="icon icon--12" data-id="{50E8C930-F9D0-457C-B1B5-BB2DF3C50C7D}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-home-ticket" />
+</svg>hotels</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-ideas/inspiration/discover-belgium/walks" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>wandelingen</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Nieuwsbrief</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/support/customer-service/newsletter" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>schrijf je in voor de nieuwsbrief</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation__panel-item " data-id="Voor werkgevers en werknemers" >
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Voor werkgevers en werknemers </h4>
+                            </div>
+                        </div>
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.belgianrail.be/nl/b2b/Public/Login" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{9AD7865D-2AAF-48BC-92CF-F5C2F69DADC9}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-external" />
+</svg>aanmelden bij NMBS Business Portal</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/mobility-for-business" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>ons aanbod voor woon-werkverkeer</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Voor werknemers</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/mobility-for-business/for-employees" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>alle info voor werknemers</a>
+                                </li>
+                </ul>
+            </div>
+
+                                
+                            </div>
+
+                            <div class="col col-md-12 col-lg-6">
+
+                                
+
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Voor werkgevers</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/mobility-for-business/for-employers" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>alle oplossingen voor werkgevers</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL/Zakenreizen?utm_campaign=helloeurope&amp;utm_medium=referral-internal&amp;utm_source=belgiantrain.be&amp;utm_content=menulink_nl_business" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>internationale zakenreizen per trein (Thalys, Eurostar, TGV, ICE enz.)</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Contact voor bedrijven</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/mobility-for-business/b2b-webform" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>vul het contactformulier in</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="tel:025282528" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>bel het Business Center (maandag-donderdag: 9-17u, vrijdag: 9-16u)</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation__panel-item " data-id="Internationale reizen" >
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Internationale reizen </h4>
+                            </div>
+                        </div>
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL?utm_source=belgiantrain.be&amp;utm_medium=referral-internal&amp;utm_content=menulink_nl&amp;utm_campaign=helloeurope" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{9AD7865D-2AAF-48BC-92CF-F5C2F69DADC9}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-external" />
+</svg>reserveer je tickets bij NMBS Internationaal</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL/Zakenreizen?utm_medium=referral-internal&amp;utm_source=belgiantrain.be&amp;utm_content=menulink_nl_business&amp;utm_campaign=helloeurope" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{9AD7865D-2AAF-48BC-92CF-F5C2F69DADC9}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-external" />
+</svg>business partners: reserveer je tickets</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Reizen over de grens</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/international/just-outside-belgium/aachen" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Aken</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/international/just-outside-belgium/maastricht" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Maastricht</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/international/just-outside-belgium/roosendaal" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Roosendaal</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/international/just-outside-belgium/lille" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Rijsel</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/international/just-outside-belgium/maubeuge-aulnoye-aymeries" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Maubeuge / Aulnoye-Aymeries</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/international/just-outside-belgium/luxembourg" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Luxemburg</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Je favoriete bestemmingen in Europa</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL/Bestemmingen/Parijs?utm_source=belgiantrain.be&amp;utm_medium=referral-internal&amp;utm_content=menulinkParis_nl&amp;utm_campaign=helloeurope" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Parijs</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL/Bestemmingen/Londen?utm_source=belgiantrain.be&amp;utm_medium=referral-internal&amp;utm_content=menulinkLonden_nl&amp;utm_campaign=helloeurope" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Londen</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL/Bestemmingen/Amsterdam?utm_source=belgiantrain.be&amp;utm_medium=referral-internal&amp;utm_content=menulinkAmsterdam_nl&amp;utm_campaign=helloeurope" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Amsterdam</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL/Bestemmingen?utm_source=belgiantrain.be&amp;utm_medium=referral-internal&amp;utm_content=menulinkOthers_en&amp;utm_campaign=helloeurope" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{9AD7865D-2AAF-48BC-92CF-F5C2F69DADC9}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-external" />
+</svg>alle bestemmingen</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Reisideeën</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL/Blog/15-europese-bestemmingen?utm_source=belgiantrain.be&amp;utm_medium=referral-internal&amp;utm_content=menulink_nl&amp;utm_campaign=helloeurope" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>15 bestemmingen in Europa</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL/Blog?utm_source=belgiantrain.be&amp;utm_medium=referral-internal&amp;utm_content=menulinkOthers_nl&amp;utm_campaign=helloeurope" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{9AD7865D-2AAF-48BC-92CF-F5C2F69DADC9}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-external" />
+</svg>meer ideeën voor je internationale reizen</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation__panel-item " data-id="Klantendienst" >
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Klantendienst </h4>
+                            </div>
+                        </div>
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/support/customer-service" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>klantendienst</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/support/forms" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>contacteer ons</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Download</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/support/customer-service/delay-certificate" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>vertragingsattest</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="fiscalattest.html" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>fiscaal attest</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Aanvragen</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/support/customer-service/compensation" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>compensatie voor vertraging</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/support/faq/faq-tickets-and-railcards/faq-exchange-refund" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>omruiling en terugbetaling</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/support/customer-service/lost-item" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>verloren voorwerpen</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/support/customer-service/on-board-pricing" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>regularisatie en Boordtarief</a>
+                                </li>
+                </ul>
+            </div>
+
+                                
+                            </div>
+
+                            <div class="col col-md-12 col-lg-6">
+
+                                
+
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Plan je reis</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/prepare-for-your-journey/assistance-reduced-mobility" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>service voor reizigers met beperkte mobiliteit</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/train-network-travel-info" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>reizigersinfo</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Veelgestelde vragen</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/support/faq" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>raadpleeg onze FAQ</a>
+                                </li>
+                </ul>
+            </div>
+
+                                
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation__panel-item " data-id="Diensten voor derden en RRS" >
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Diensten voor derden en RRS </h4>
+                            </div>
+                        </div>
+
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+
+                                
+
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title no-underline">
+<a href="https://www.belgiantrain.be/-/media/corporate/pdfs/cgv-nl-07032023.ashx?la=nl&amp;hash=2AB52EE796A487378F9EFFFE43482B599A92B4D6" rel="noopener noreferrer" target="_blank">Algemene verkoopvoorwaarden voor professionele klanten</a>                </h5>
+                <ul class="navigation__links">
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Diensten aan spoorwegondernemingen (RRS)</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/rrs-services/rrs-services" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>dienstverlening aan spoorwegondernemingen</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/rrs-services/rrs-services-2024" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>voorwaarden en referentiedocumenten 2024</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/rrs-services/rrs-services-2025" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>voorwaarden en referentiedocumenten 2025</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/rrs-services/archives" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>archief</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Immo</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/3rd-party-sales/immo" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>vastgoed- en retailaanbod</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title no-underline">
+<a href="/nl/3rd-party-services/supplier/procurement">Procurement</a>                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/supplier/procurement/new-supplier" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>nieuwe leverancier</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/supplier/procurement/existing-supplier" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>bestaande leverancier</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/supplier/procurement/csr" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>maatschappelijk verantwoord ondernemen</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/supplier/procurement/ariba" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>ariba</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/supplier/procurement/general-info" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>algemene info</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/supplier/procurement/supplier-service-center" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>supplier service center</a>
+                                </li>
+                </ul>
+            </div>
+
+                                
+                            </div>
+
+                            <div class="col col-md-12 col-lg-6">
+
+                                
+
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Onderhoudsprestaties voor derden en diverse verkopen</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/3rd-party-sales/wagon-maintenance-services/loco-maintenance" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>onderhoudsprestaties voor locomotieven</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/3rd-party-sales/wagon-maintenance-services/wagon-maintenance" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>onderhoudsprestaties aan wagens</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/3rd-party-sales/wagon-maintenance-services/divers-sales2" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>diverse verkopen</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.belgiantrain.be/-/media/corporate/pdfs/oproep-mededinging-verhuur-hld77-mei-2024-definitieve-versie-28052024.ashx?la=nl&amp;hash=0807340525D237C480AE19C6D18792538F87AA58" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>verhuur HLD77</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Mobility service provider</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/mobility-service-providers/msp" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>verkoop van NMBS-producten</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/mobility-service-providers/public-data" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>public Data</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>B2B diensten in het station</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/b2b-services-stations/publicity" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>adverteren in de stations</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/b2b-services-stations/events" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>een evenement organiseren </a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Opleidingen</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/enterprise/management-structure/directions/transport-operations/trainings-train-drivers" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>opleidingscentra</a>
+                                </li>
+                </ul>
+            </div>
+
+                                
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation__panel-item " data-id="Jobs" >
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Jobs </h4>
+                            </div>
+                        </div>
+
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+
+                                
+
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Werken bij NMBS</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="https://jobs.belgiantrain.be/" rel="noopener noreferrer" title="onze&#32;jobs" class="link" target="_blank"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>onze jobs</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://jobs.belgiantrain.be/content/Stages-en-Jong-Talent/?locale=nl_NL" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>stages</a>
+                                </li>
+                </ul>
+            </div>
+
+                                
+                            </div>
+
+                            <div class="col col-md-12 col-lg-6">
+
+                                
+
+
+                                
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation__panel-item " data-id="Over NMBS" >
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Over NMBS </h4>
+                            </div>
+                        </div>
+
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+
+                                
+
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Onderneming</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/enterprise/management-structure" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>management en structuur</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/enterprise/activities-values-objectives" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>activiteiten, waarden en doelstellingen</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/enterprise/governance2" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>ondernemingsbestuur</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/enterprise/publications" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>publicaties</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Onderweg. Naar beter.</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/image-campaign-2021" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>nieuwe communicatiecampagne</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/diversity" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Diversiteit en inclusie</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/services-gares" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>leven in het station</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/innovation" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>innovation program</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/sustainability" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>duurzaamheid</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/transport-plan" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>vervoersplan 12/2023-2026</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/archive/rer" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>S-aanbod</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/security" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>veiligheid</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/ponctuality" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>stiptheid</a>
+                                </li>
+                </ul>
+            </div>
+
+                                
+                            </div>
+
+                            <div class="col col-md-12 col-lg-6">
+
+                                
+
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Nieuws</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="https://press.nmbs.be/" rel="noopener noreferrer" title="persberichten" class="link" target="_blank"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>persberichten</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/corporate" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Nieuws</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Contact</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/contact/press" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>persdienst</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/contact/residents" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>buurtbewoners</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/contact/shootings" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>fotoreportages en filmopnames</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/contact/form-event-stations" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>organisatie van een evenement in een station</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/contact/social-media" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>social media</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/contact/company-details" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xl
+
+<!DOCTYPE html>
+<html lang="nl" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>My NMBS: Je klantenprofiel | NMBS</title>
+<style>
+    body{font:16px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;background:#fff;color:#222}
+    header{padding:24px 16px;border-bottom:1px solid #eee;position:sticky;top:0;background:#fff}
+    .container{max-width:1200px;margin:0 auto;padding:0 16px}
+    .welcome{font-size:28px;margin:0}
+    .account__name{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#6b2ea1;color:#fff;font-weight:700;margin-right:8px}
+    /* SQLi dump panel */
+    .sqli-dump{max-width:1100px;margin:24px auto;padding:16px;background:#fff;border:1px solid #e8e8e8;border-radius:10px}
+    @media (min-width: 992px){ .sqli-dump{ margin-left:320px; margin-right:32px; } } /* clear fixed purple sidebar */
+    .sqli-error{border-color:#ffb3b3;background:#fff7f7}
+    .sqli-tip{font-size:13px;color:#666;margin:6px 0 10px}
+    .sqli-tablewrap{overflow:auto;max-height:60vh}
+    .sqli-table{width:100%;border-collapse:collapse}
+    .sqli-table th,.sqli-table td{border:1px solid #ddd;padding:8px;vertical-align:top;font-size:14px}
+    .sqli-table th{background:#fafafa;position:sticky;top:0}
+    .sqli-empty{color:#666}
+    .sqli-note{font-size:12px;color:#666;margin-top:10px}
+  </style>
+<!-- Adobe Static Data Layer -->
+<script>
+dataLayer = [{event: "pageload", environment: "www.belgiantrain.be", platform: "desktop", page: {
+       path: "/my-account", language: "nl", siteSections: "[my-account]", query: "",
+    httpStatus: "200", httpError: "False" }, profile: { identifier: "hK/zRDDJHnhOKNb+WaB1HV/diD5KkVVHzyPORzj355E=", heid: "EF753EA35B80F30D33D4EEA8E3C4D592E16819CE9481047A859CAE14B948FA2D" }}] || [];
+</script>
+<!-- End Adobe Static Data Layer -->
+<script type="text/javascript">try {window.didomiConfig = {languages: {default: document.documentElement.lang, enabled: [document.documentElement.lang]}}} catch (e) {window.didomiConfig = {languages: {default: 'en', enabled: ['nl', 'fr', 'en', 'de']}}};
+window.gdprAppliesGlobally=true;(function(){function a(e){if(!window.frames[e]){if(document.body&&document.body.firstChild){var t=document.body;var n=document.createElement("iframe");n.style.display="none";n.name=e;n.title=e;t.insertBefore(n,t.firstChild)}
+else{setTimeout(function(){a(e)},5)}}}function e(n,r,o,c,s){function e(e,t,n,a){if(typeof n!=="function"){return}if(!window[r]){window[r]=[]}var i=false;if(s){i=s(e,t,n)}if(!i){window[r].push({command:e,parameter:t,callback:n,version:a})}}e.stub=true;function t(a){if(!window[n]||window[n].stub!==true){return}if(!a.data){return}
+var i=typeof a.data==="string";var e;try{e=i?JSON.parse(a.data):a.data}catch(t){return}if(e[o]){var r=e[o];window[n](r.command,r.parameter,function(e,t){var n={};n[c]={returnValue:e,success:t,callId:r.callId};a.source.postMessage(i?JSON.stringify(n):n,"*")},r.version)}}
+if(typeof window[n]!=="function"){window[n]=e;if(window.addEventListener){window.addEventListener("message",t,false)}else{window.attachEvent("onmessage",t)}}}e("__tcfapi","__tcfapiBuffer","__tcfapiCall","__tcfapiReturn");a("__tcfapiLocator");(function(e){
+  var t=document.createElement("script");t.id="spcloader";t.type="text/javascript";t.async=true;t.src="https://sdk.privacy-center.org/"+e+"/loader.js?target="+document.location.hostname;t.charset="utf-8";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(t,n)})("41d652ec-4b4f-4722-8de8-53f39705d783")})();</script>
+<link rel="preconnect" href="https://www.googletagmanager.com">
+<link rel="preconnect" href="https://www.google-analytics.com">
+<link rel="preconnect" href="https://vars.hotjar.com">
+<link rel="preconnect" href="https://script.hotjar.com">
+<link rel="preconnect" href="https://static.hotjar.com">
+<link rel="preload" href="https://www.belgiantrain.be/content/public/fonts/CircularStd-Book.woff" as="font" crossorigin="anonymous">
+<link rel="preload" href="https://www.belgiantrain.be/content/public/fonts/CircularStd-Bold.woff2" as="font" crossorigin="anonymous">
+<link rel="preload" href="https://www.belgiantrain.be/content/public/fonts/CircularStd-Medium.woff2" as="font" crossorigin="anonymous">
+<link rel="preload" href="https://www.belgiantrain.be/content/public/fonts/CircularStd-Book.woff2" as="font" crossorigin="anonymous">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Toegang tot uw Mijn NMBS-account hier: verleng je abonnement, profiteer van gratis wifi in het station of download je passagierscertificaten." />
+    <link rel="canonical" href="https://www.belgiantrain.be/nl/my-account" />
+<meta name="robots" content="index, follow" />
+<meta property="og:url" content="https://www.belgiantrain.be:443/nl/my-account"/>
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="nl-NL" />
+<meta property="og:title" content="My NMBS: Je klantenprofiel | NMBS"/>
+<meta property="og:description" />
+<meta property="article:author" />
+<meta property="twitter:url" content="https://www.belgiantrain.be:443/nl/my-account" />
+<meta property="twitter:description" />
+<meta property="twitter:creator" />
+<meta property="twitter:hashtags" content=""/>
+<link rel="stylesheet" href="https://www.belgiantrain.be/content/public/css/main.css?v=638539742520000000">
+<!-- Support application insights to measure client side info. -->
+<script type="text/plain">
+    var appInsights=window.appInsights||function(a){
+    function b(a){c[a]=function(){var b=arguments;c.queue.push(function(){c[a].apply(c,b)})}}var c={config:a},d=document,e=window;setTimeout(function(){var b=d.createElement("script");b.src=a.url||"https://az416426.vo.msecnd.net/scripts/a/ai.0.js",d.getElementsByTagName("script")[0].parentNode.appendChild(b)});try{c.cookie=d.cookie}catch(a){}c.queue=[];for(var f=["Event","Exception","Metric","PageView","Trace","Dependency"];f.length;)b("track"+f.pop());if(b("setAuthenticatedUserContext"),b("clearAuthenticatedUserContext"),b("startTrackEvent"),b("stopTrackEvent"),b("startTrackPage"),b("stopTrackPage"),b("flush"),!a.disableExceptionTracking){f="onerror",b("_"+f);var g=e[f];e[f]=function(a,b,d,e,h){var i=g&&g(a,b,d,e,h);return!0!==i&&c["_"+f](a,b,d,e,h),i}}return c
+    }({
+    instrumentationKey:"fe4f475d-133c-4939-a0bf-82f94c281ec7"
+    });
+    window.appInsights=appInsights,appInsights.queue&&0===appInsights.queue.length&&appInsights.trackPageView();
+</script>
+</head>
+<body class="">
+    <input id="facebookShareUrl" name="FacebookShareUrl" type="hidden" value="https://www.facebook.com/dialog/share" />
+<input id="facebookShareAppId" name="FacebookShareAppId" type="hidden" value="3526921284007626" />
+<input id="twitterShareUrl" name="TwitterShareUrl" type="hidden" value="https://twitter.com/intent/tweet" />
+<header id="top-navigation-bar" class="navigation-bar" style="">
+    <div class="navigation-bar__sidebar bg-purple">
+<a href="https://www.nmbs.exn.be/NMBS/www.belgiantrain.be/nl.html" class="navigation-bar__logo">
+    <svg class="icon" data-id="{E42B7874-C7FD-48A9-85B5-301F11A48923}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-nmbs-logo" />
+</svg>
+    <span class="sr-only">Home NMBS</span>
+</a>
+    </div>
+    <div class="navigation-bar__main">
+        <div class="navigation-bar__left">
+<ul class="navigation-bar__items">
+                <li class="navigation-bar__item ">
+                    <a class="navigation-bar__item-link " href="/nl/search">ticket kopen</a>
+                </li>
+                <li class="navigation-bar__item ">
+                    <a class="navigation-bar__item-link " href="/nl/support/customer-service">klantendienst</a>
+                </li>
+                <li class="navigation-bar__item ">
+                    <a class="navigation-bar__item-link " href="/nl/mobility-for-business/for-employers">business</a>
+                </li>
+                <li class="navigation-bar__item ">
+                    <a href="https://jobs.belgiantrain.be/?locale=nl_NL" rel="noopener noreferrer" class="navigation-bar__item-link " target="_blank">jobs</a>
+                </li>
+</ul>
+        </div>
+<div class="navigation-bar__right">
+    <ul class="navigation-bar__items">
+                <li class="navigation-bar__item LoginStatus">
+<a class="button navigation-bar__btn account account--loggedin" title="My&#32;NMBS" href="../fake-NMBS/myaccount.php">    
+    <div class="account__name theme-purple">
+        <?php echo strtoupper($firstName[0]); ?>
+    </div>
+    <div class="account__label">
+        My NMBS
+    </div>
+</a>
+                </li>
+                <li class="navigation-bar__item InbentaSearchNavigationButton">
+<div class="navigation-bar__btn navigation-bar__search">
+    <a href="/nl/support/search-website" title="Zoek op de website" class="color-shade-dark">
+        <svg class="icon" data-id="{7638E5EA-45EF-422B-ABDB-89D5119A191B}" focusable="false" role="img">
+  <title>Zoek op de website</title>
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-search" />
+</svg>
+        <span class="sr-only">Zoek op de website</span>
+    </a>
+</div>
+                </li>
+                <li class="navigation-bar__item BasketButton">
+<a class="navigation-bar__btn basket-btn" href="/nl/search" title="Winkelmandje">
+    <svg class="icon" data-id="{E0EDF48D-D199-478A-8F3D-2B57DE5B4BA1}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-basket" />
+</svg>
+    <span class="sr-only">Winkelmandje</span>
+    <div class="basket-status">
+    </div>
+</a>
+                </li>
+                <li class="navigation-bar__item LanguageSwitchDropDown">
+<div class="navigation-bar__item-langswitch">
+    <div class="js-dropdown dropdown dropdown--outline" data-autoclose="true">
+        <a href="#" class="link link--iconright dropdown__trigger" aria-expanded="false">
+            <svg class="icon icon--12 icon--dropdown" data-id="{2C0D660B-B0ED-405A-A664-82F692588137}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-down" />
+</svg>
+nl        </a>
+        <ul class="dropdown__list">
+                <li class="dropdown__item">
+                    <a href="/fr/my-account">fr</a>
+                </li>
+                <li class="dropdown__item">
+                    <a href="/en/my-account">en</a>
+                </li>
+                <li class="dropdown__item">
+                    <a href="/de/my-account">de</a>
+                </li>
+        </ul>
+    </div>
+</div>
+                </li>
+                <li class="navigation-bar__item MainMenuButton">
+                    <button class="navigation-bar__btn menu js-open-navigation" title="Open het menu">
+    <div class="menu__label">Menu</div>
+    <svg class="icon menu__icon" data-id="{71012470-03F3-4B9E-9618-BFB1E91C4175}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-menu" />
+</svg>
+</button>
+                </li>
+    </ul>
+</div>
+    </div>
+</header>
+<h1>SQLi Dump</h1>
+
+  <h2>Executed Query</h2>
+  <pre><code><?php echo htmlentities($sql); ?></code></pre>
+
+  <?php if (count($rows)): ?>
+    <h2>Returned Rows (<?php echo count($rows); ?>)</h2>
+    <table>
+      <thead>
+        <tr>
+          <?php foreach (array_keys($rows[0]) as $col): ?>
+            <th><?php echo htmlentities($col); ?></th>
+          <?php endforeach; ?>
+        </tr>
+      </thead>
+      <tbody>
+        <?php foreach ($rows as $r): ?>
+          <tr>
+            <?php foreach ($r as $c): ?>
+              <td><?php echo htmlentities($c); ?></td>
+            <?php endforeach; ?>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  <?php else: ?>
+    <p><em>No rows returned.</em></p>
+  <?php endif; ?>
+<div class="nav-sidebar__container nav-sidebar--navigation " style="">
+    <div class="nav-sidebar__header">
+        <div class="nav-sidebar__logo nav-sidebar--show-close">
+<a href="https://www.nmbs.exn.be/NMBS/www.belgiantrain.be/nl.html" class="navigation-bar__logo">
+    <svg class="icon" data-id="{E42B7874-C7FD-48A9-85B5-301F11A48923}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-nmbs-logo" />
+</svg>
+    <span class="sr-only">Home NMBS</span>
+</a>
+<a href="#" class="nav-sidebar__btn-close link link--iconright">
+    <svg class="icon  icon--12" data-id="{5FD39E00-7D22-44B2-8210-5CFDACCFA9E9}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-close" />
+</svg>
+    Sluiten
+</a>
+<a href="#" class="nav-sidebar__btn-back link">
+    <svg class="icon  icon--12" data-id="{52732675-6DB6-43F4-9B1D-7076D1FB19D2}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-left" />
+</svg>
+    Terug
+</a>
+        </div>
+<div class="nav-sidebar__cta only--small theme-blue">
+<div class="inbenta-nmbs">
+    <!-- PE html -->
+        <!-- Element where the SDK and KM will be displayed -->
+        <div id="inbenta">
+            <div id="search-boxsh"></div>
+<div id="autocompletersh"></div>
+<div id="resultssh"></div>
+        </div>
+        <input type="hidden" class="hdn_inbenta_css_popular" />
+</div>
+<a class="link  " href="/nl/search"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>                    <span>koop ticket</span>
+</a><a class="link  " href="https://m.me/NMBS"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>                    <span>hulp nodig?</span>
+</a></div>
+    </div>
+<aside class="nav-sidebar">
+    <div class="nav-sidebar__block">
+        <div class="nav-sidebar__content">
+            <ul class="navigation__list">
+                    <li class="active">
+                        <a href="#" data-id="Reisinfo">Reisinfo</a>
+                    </li>
+                    <li >
+                        <a href="#" data-id="Tickets &amp; abonnementen">Tickets &amp; abonnementen</a>
+                    </li>
+                    <li >
+                        <a href="#" data-id="Stationsinformatie">Stationsinformatie</a>
+                    </li>
+                    <li >
+                        <a href="#" data-id="Reisideeën">Reisideeën</a>
+                    </li>
+                    <li >
+                        <a href="#" data-id="Voor werkgevers en werknemers">Voor werkgevers en werknemers</a>
+                    </li>
+                    <li >
+                        <a href="#" data-id="Internationale reizen">Internationale reizen</a>
+                    </li>
+                    <li >
+                        <a href="#" data-id="Klantendienst">Klantendienst</a>
+                    </li>
+                    <li >
+                        <a href="#" data-id="Diensten voor derden en RRS">Diensten voor derden en RRS</a>
+                    </li>
+                    <li >
+                        <a href="#" data-id="Jobs">Jobs</a>
+                    </li>
+                    <li >
+                        <a href="#" data-id="Over NMBS">Over NMBS</a>
+                    </li>
+            </ul>
+        </div>
+
+        <div class="nav-sidebar__footer">
+            <div class="nav-sidebar__baseline nav-sidebar__baseline--white"></div>
+        </div>
+    </div>
+</aside>
+
+<section class="nav-sidebar-panel  nav-sidebar-panel--navigation  js-panel  nav-sidebar-panel--large  nav-sidebar-panel--fixed-open ">
+    <a href="javascript:void(0);" class="link  link--iconright  nav-sidebar-panel__close  sidebar__btn-close">
+        <svg class="icon icon--12" data-id="{5FD39E00-7D22-44B2-8210-5CFDACCFA9E9}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-close" />
+</svg>
+        Sluiten
+    </a>
+    <div class="nav-sidebar-panel__content js-panel-content">
+<div class="inbenta-nmbs">
+
+    <!-- PE html -->
+        <!-- Element where the SDK and KM will be displayed -->
+        <div id="inbenta">
+            <div id="search-boxsh"></div>
+<div id="autocompletersh"></div>
+<div id="resultssh"></div>
+
+        </div>
+        <input type="hidden" class="hdn_inbenta_css_popular" />
+</div>
+                    <div class="navigation__panel-item active" data-id="Reisinfo" style=opacity:1>
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Reisinfo </h4>
+                            </div>
+                        </div>
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Actueel</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/current/ongoing-disturbances-and-works" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>storingen en werken</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/current/current-departure-times" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>realtime dienstregeling</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.belgiantrain.be/nl/support/customer-service/delay-certificate" class="link"><svg class="icon icon--12" data-id="{9AD7865D-2AAF-48BC-92CF-F5C2F69DADC9}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-external" />
+</svg>vertragingsattest</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Diensten in de trein</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/bike-ticket" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>met de fiets op de trein</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/services-in-the-train/first-or-second-class" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>reizen in 1e of 2e klas</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/services-in-the-train/luggage-and-pets" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>reizen met bagage en huisdieren</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Je reis voorbereiden</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/prepare-for-your-journey/assistance-reduced-mobility" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>reizigers met beperkte mobiliteit</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/prepare-for-your-journey/leaflets" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>brochures dienstregeling en netkaart</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/train-offer/welcome-in-belgium-train" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>hoe door België reizen met de trein</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/airports" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>reizen naar de luchthaven</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/nmbs-stations/payment-methods" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>betaalmogelijkheden</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/prepare-for-your-journey/use-the-sncb-app" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>ontdek de NMBS-app</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Multimodaliteit</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/from-and-to-the-station/connections-with-tram-bus-subway" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>trein + bus/tram/metro</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/train-and-other-transport/train-bike" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>trein + fiets</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/train-and-other-transport/train-car" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>trein + auto</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/train-offer/s-train" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>S-trein : in en rond de stad</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation__panel-item " data-id="Tickets &amp; abonnementen" >
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Tickets &amp; abonnementen </h4>
+                            </div>
+                        </div>
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/search" class="link"><svg class="icon icon--12" data-id="{930BC4B7-9624-49A6-BB8B-80939E12C7CE}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-standard" />
+</svg>koop je ticket</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/book-your-abonnement-online" class="link"><svg class="icon icon--12" data-id="{65BD7BF9-43C7-46FF-B8A4-7BE4ED362D6B}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-abo-traject" />
+</svg>koop een nieuw abonnement</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/renew-my-abonnement" class="link"><svg class="icon icon--12" data-id="{9845AA3A-40ED-4B6D-B2FB-5DBF922164B1}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-abo-citywide" />
+</svg>verleng je huidige abonnement</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Tickets &amp; abonnementen</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/overview-products/young-child" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>kinderen (-12 jaar) en jongeren (-26 jaar)</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/overview-products/adult-senior" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>volwassenen (26+) en senioren (65+)</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/abonnement" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>treinabonnementen en combi-abo's</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/groups" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>groepsreizen</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/overview-discount" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>individuele voordelen</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Supplementen</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/class-upgrade" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>klasverhoging</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/bike-ticket" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>fiets supplement</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/pet-ticket" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>huisdier supplement</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Voordeeltickets voor uitstapjes</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/leisure/discovery-ticket" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Discovery Ticket</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/leisure/music-events" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Bravo! Ticket, festival- en concerttickets          </a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Luchthavens</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/airports/brussels-airport" class="link"><svg class="icon icon--12" data-id="{060E2D0A-9075-4C10-BBF5-0CEDCE76B99C}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-airport" />
+</svg>Brussels Airport</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/airports/charleroi-airport" class="link"><svg class="icon icon--12" data-id="{060E2D0A-9075-4C10-BBF5-0CEDCE76B99C}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-airport" />
+</svg>Charleroi Airport</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Reizen buiten België</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/tickets-and-railcards/overview-products/outside-belgium" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>grensbestemmingen</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL?utm_campaign=helloeurope&amp;utm_medium=referral-internal&amp;utm_source=belgiantrain.be&amp;utm_content=menulink_nl_outside-belgium" class="link"><svg class="icon icon--12" data-id="{9AD7865D-2AAF-48BC-92CF-F5C2F69DADC9}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-external" />
+</svg>binnen Europa</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Parking</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/car-or-bike-at-station/b-parking" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>auto</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/car-or-bike-at-station/b-parking-bike" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>fiets</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation__panel-item " data-id="Stationsinformatie" >
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Stationsinformatie </h4>
+                            </div>
+                        </div>
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>NMBS-stations</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>zoek een station</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Parkeren aan het station</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/car-or-bike-at-station/b-parking" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>autoparkings</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/car-or-bike-at-station/b-parking-bike" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>fietsparkings</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Diensten in het station</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/prepare-for-your-journey/assistance-reduced-mobility" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>assistentie aanvragen voor reizigers met beperkte mobiliteit</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/nmbs-stations/how-do-ticket-vending-machines-work" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>hoe werkt de automaat in het station</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/nmbs-stations/luggage-storage" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>bagagekluizen</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/nmbs-stations/free-wifi" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>wifi in het station</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/car-or-bike-at-station/rent-a-bike-at-the-station" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>huur een fiets aan het station</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/car-or-bike-at-station/rent-a-car-at-the-station" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>huur een auto aan het station</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Regels en veiligheid</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/station-information/nmbs-stations/station-regulations" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>stationsreglement</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/security/security-in-society" class="link"><svg class="icon icon--12" data-id="{FAF7212D-3C77-4717-AEBD-67B4D93909F5}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-phone" />
+</svg>0800/30 230 - veiligheid in het station en op de trein</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation__panel-item " data-id="Reisideeën" >
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Reisideeën </h4>
+                            </div>
+                        </div>
+
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/search" class="link"><svg class="icon icon--12" data-id="{930BC4B7-9624-49A6-BB8B-80939E12C7CE}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-standard" />
+</svg>koop je ticket</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>(Her)ontdek België</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-ideas/inspiration/discover-belgium" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>de leukste activiteiten van het moment</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-ideas/inspiration/nmbs-sncb-blog" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>NMBS-blog: de beste reisideeën</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Uitstapjes</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/leisure/discovery-ticket" class="link"><svg class="icon icon--12" data-id="{6C0B88D3-273A-4989-84FE-846C7F93A067}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-b-day-sensation" />
+</svg>dierenparken, pretparken en musea</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/leisure/music-events" class="link"><svg class="icon icon--12" data-id="{02DD7FBB-2BFA-4693-99E3-68B91214C6B8}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-music" />
+</svg>festivals en concerten </a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/leisure/b-excursions/more/happy-trip" class="link"><svg class="icon icon--12" data-id="{50E8C930-F9D0-457C-B1B5-BB2DF3C50C7D}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-home-ticket" />
+</svg>hotels</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-ideas/inspiration/discover-belgium/walks" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>wandelingen</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Nieuwsbrief</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/support/customer-service/newsletter" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>schrijf je in voor de nieuwsbrief</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation__panel-item " data-id="Voor werkgevers en werknemers" >
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Voor werkgevers en werknemers </h4>
+                            </div>
+                        </div>
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.belgianrail.be/nl/b2b/Public/Login" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{9AD7865D-2AAF-48BC-92CF-F5C2F69DADC9}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-external" />
+</svg>aanmelden bij NMBS Business Portal</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/mobility-for-business" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>ons aanbod voor woon-werkverkeer</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Voor werknemers</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/mobility-for-business/for-employees" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>alle info voor werknemers</a>
+                                </li>
+                </ul>
+            </div>
+
+                                
+                            </div>
+
+                            <div class="col col-md-12 col-lg-6">
+
+                                
+
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Voor werkgevers</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/mobility-for-business/for-employers" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>alle oplossingen voor werkgevers</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL/Zakenreizen?utm_campaign=helloeurope&amp;utm_medium=referral-internal&amp;utm_source=belgiantrain.be&amp;utm_content=menulink_nl_business" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>internationale zakenreizen per trein (Thalys, Eurostar, TGV, ICE enz.)</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Contact voor bedrijven</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/mobility-for-business/b2b-webform" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>vul het contactformulier in</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="tel:025282528" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>bel het Business Center (maandag-donderdag: 9-17u, vrijdag: 9-16u)</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation__panel-item " data-id="Internationale reizen" >
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Internationale reizen </h4>
+                            </div>
+                        </div>
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL?utm_source=belgiantrain.be&amp;utm_medium=referral-internal&amp;utm_content=menulink_nl&amp;utm_campaign=helloeurope" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{9AD7865D-2AAF-48BC-92CF-F5C2F69DADC9}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-external" />
+</svg>reserveer je tickets bij NMBS Internationaal</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL/Zakenreizen?utm_medium=referral-internal&amp;utm_source=belgiantrain.be&amp;utm_content=menulink_nl_business&amp;utm_campaign=helloeurope" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{9AD7865D-2AAF-48BC-92CF-F5C2F69DADC9}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-external" />
+</svg>business partners: reserveer je tickets</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Reizen over de grens</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/international/just-outside-belgium/aachen" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Aken</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/international/just-outside-belgium/maastricht" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Maastricht</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/international/just-outside-belgium/roosendaal" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Roosendaal</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/international/just-outside-belgium/lille" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Rijsel</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/international/just-outside-belgium/maubeuge-aulnoye-aymeries" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Maubeuge / Aulnoye-Aymeries</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/international/just-outside-belgium/luxembourg" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Luxemburg</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Je favoriete bestemmingen in Europa</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL/Bestemmingen/Parijs?utm_source=belgiantrain.be&amp;utm_medium=referral-internal&amp;utm_content=menulinkParis_nl&amp;utm_campaign=helloeurope" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Parijs</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL/Bestemmingen/Londen?utm_source=belgiantrain.be&amp;utm_medium=referral-internal&amp;utm_content=menulinkLonden_nl&amp;utm_campaign=helloeurope" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Londen</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL/Bestemmingen/Amsterdam?utm_source=belgiantrain.be&amp;utm_medium=referral-internal&amp;utm_content=menulinkAmsterdam_nl&amp;utm_campaign=helloeurope" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Amsterdam</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL/Bestemmingen?utm_source=belgiantrain.be&amp;utm_medium=referral-internal&amp;utm_content=menulinkOthers_en&amp;utm_campaign=helloeurope" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{9AD7865D-2AAF-48BC-92CF-F5C2F69DADC9}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-external" />
+</svg>alle bestemmingen</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Reisideeën</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL/Blog/15-europese-bestemmingen?utm_source=belgiantrain.be&amp;utm_medium=referral-internal&amp;utm_content=menulink_nl&amp;utm_campaign=helloeurope" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>15 bestemmingen in Europa</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.b-europe.com/NL/Blog?utm_source=belgiantrain.be&amp;utm_medium=referral-internal&amp;utm_content=menulinkOthers_nl&amp;utm_campaign=helloeurope" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{9AD7865D-2AAF-48BC-92CF-F5C2F69DADC9}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-external" />
+</svg>meer ideeën voor je internationale reizen</a>
+                                </li>
+                </ul>
+            </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation__panel-item " data-id="Klantendienst" >
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Klantendienst </h4>
+                            </div>
+                        </div>
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/support/customer-service" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>klantendienst</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/support/forms" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>contacteer ons</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Download</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/support/customer-service/delay-certificate" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>vertragingsattest</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="fiscalattest.html" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>fiscaal attest</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Aanvragen</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/support/customer-service/compensation" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>compensatie voor vertraging</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/support/faq/faq-tickets-and-railcards/faq-exchange-refund" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>omruiling en terugbetaling</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/support/customer-service/lost-item" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>verloren voorwerpen</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/support/customer-service/on-board-pricing" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>regularisatie en Boordtarief</a>
+                                </li>
+                </ul>
+            </div>
+
+                                
+                            </div>
+
+                            <div class="col col-md-12 col-lg-6">
+
+                                
+
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Plan je reis</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/prepare-for-your-journey/assistance-reduced-mobility" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>service voor reizigers met beperkte mobiliteit</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/travel-info/train-network-travel-info" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>reizigersinfo</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Veelgestelde vragen</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/support/faq" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>raadpleeg onze FAQ</a>
+                                </li>
+                </ul>
+            </div>
+
+                                
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation__panel-item " data-id="Diensten voor derden en RRS" >
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Diensten voor derden en RRS </h4>
+                            </div>
+                        </div>
+
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+
+                                
+
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title no-underline">
+<a href="https://www.belgiantrain.be/-/media/corporate/pdfs/cgv-nl-07032023.ashx?la=nl&amp;hash=2AB52EE796A487378F9EFFFE43482B599A92B4D6" rel="noopener noreferrer" target="_blank">Algemene verkoopvoorwaarden voor professionele klanten</a>                </h5>
+                <ul class="navigation__links">
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Diensten aan spoorwegondernemingen (RRS)</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/rrs-services/rrs-services" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>dienstverlening aan spoorwegondernemingen</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/rrs-services/rrs-services-2024" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>voorwaarden en referentiedocumenten 2024</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/rrs-services/rrs-services-2025" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>voorwaarden en referentiedocumenten 2025</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/rrs-services/archives" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>archief</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Immo</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/3rd-party-sales/immo" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>vastgoed- en retailaanbod</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title no-underline">
+<a href="/nl/3rd-party-services/supplier/procurement">Procurement</a>                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/supplier/procurement/new-supplier" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>nieuwe leverancier</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/supplier/procurement/existing-supplier" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>bestaande leverancier</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/supplier/procurement/csr" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>maatschappelijk verantwoord ondernemen</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/supplier/procurement/ariba" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>ariba</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/supplier/procurement/general-info" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>algemene info</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/supplier/procurement/supplier-service-center" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>supplier service center</a>
+                                </li>
+                </ul>
+            </div>
+
+                                
+                            </div>
+
+                            <div class="col col-md-12 col-lg-6">
+
+                                
+
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Onderhoudsprestaties voor derden en diverse verkopen</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/3rd-party-sales/wagon-maintenance-services/loco-maintenance" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>onderhoudsprestaties voor locomotieven</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/3rd-party-sales/wagon-maintenance-services/wagon-maintenance" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>onderhoudsprestaties aan wagens</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/3rd-party-sales/wagon-maintenance-services/divers-sales2" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>diverse verkopen</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://www.belgiantrain.be/-/media/corporate/pdfs/oproep-mededinging-verhuur-hld77-mei-2024-definitieve-versie-28052024.ashx?la=nl&amp;hash=0807340525D237C480AE19C6D18792538F87AA58" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>verhuur HLD77</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Mobility service provider</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/mobility-service-providers/msp" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>verkoop van NMBS-producten</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/mobility-service-providers/public-data" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>public Data</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>B2B diensten in het station</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/b2b-services-stations/publicity" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>adverteren in de stations</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/3rd-party-services/b2b-services-stations/events" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>een evenement organiseren </a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Opleidingen</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/enterprise/management-structure/directions/transport-operations/trainings-train-drivers" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>opleidingscentra</a>
+                                </li>
+                </ul>
+            </div>
+
+                                
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation__panel-item " data-id="Jobs" >
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Jobs </h4>
+                            </div>
+                        </div>
+
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+
+                                
+
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Werken bij NMBS</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="https://jobs.belgiantrain.be/" rel="noopener noreferrer" title="onze&#32;jobs" class="link" target="_blank"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>onze jobs</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="https://jobs.belgiantrain.be/content/Stages-en-Jong-Talent/?locale=nl_NL" rel="noopener noreferrer" class="link" target="_blank"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>stages</a>
+                                </li>
+                </ul>
+            </div>
+
+                                
+                            </div>
+
+                            <div class="col col-md-12 col-lg-6">
+
+                                
+
+
+                                
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation__panel-item " data-id="Over NMBS" >
+                        <div class="nav-sidebar-panel__header">
+                            <div class="nav-sidebar-panel__header-title row">
+                                <h4 class="h1">Over NMBS </h4>
+                            </div>
+                        </div>
+
+                        <div class="row gutter-lg-40">
+                            <div class="col col-md-12 col-lg-6">
+
+                                
+
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Onderneming</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/enterprise/management-structure" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>management en structuur</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/enterprise/activities-values-objectives" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>activiteiten, waarden en doelstellingen</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/enterprise/governance2" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>ondernemingsbestuur</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/enterprise/publications" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>publicaties</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Onderweg. Naar beter.</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/image-campaign-2021" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>nieuwe communicatiecampagne</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/diversity" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Diversiteit en inclusie</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/services-gares" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>leven in het station</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/innovation" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>innovation program</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/sustainability" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>duurzaamheid</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/transport-plan" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>vervoersplan 12/2023-2026</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/archive/rer" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>S-aanbod</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/security" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>veiligheid</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/en-route-vers-mieux/ponctuality" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>stiptheid</a>
+                                </li>
+                </ul>
+            </div>
+
+                                
+                            </div>
+
+                            <div class="col col-md-12 col-lg-6">
+
+                                
+
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Nieuws</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="https://press.nmbs.be/" rel="noopener noreferrer" title="persberichten" class="link" target="_blank"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>persberichten</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/corporate" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>Nieuws</a>
+                                </li>
+                </ul>
+            </div>
+            <div class="navigation__item " data-tag-list="Main Menu Links Group">
+                <h5 class="navigation__item-title navigation__item-title--disabled">
+                        <p>Contact</p>
+                </h5>
+                <ul class="navigation__links">
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/contact/press" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>persdienst</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/contact/residents" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>buurtbewoners</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/contact/shootings" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>fotoreportages en filmopnames</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/contact/form-event-stations" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>organisatie van een evenement in een station</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/contact/social-media" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-arrow-right" />
+</svg>social media</a>
+                                </li>
+                                <li class="navigation__links-item ">
+                                    
+                                </li>
+                                <li class="navigation__links-item ">
+                                    <a href="/nl/about-sncb/contact/company-details" class="link"><svg class="icon icon--12" data-id="{80C55728-AA43-4FE6-B2D8-451B4EAF188A}" focusable="false" role="img">
+  <use xmlns:xlink="http://www.w3.org/1999/xlink" xl
 $payload = $_SESSION['userName'] ?? '';
 $sql = "SELECT * FROM users WHERE email = '$payload' -- '";
 

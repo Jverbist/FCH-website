@@ -50,35 +50,6 @@ if (isset($conn)) { $conn->close(); }
   .sqli-table th{background:#fafafa}
   .sqlerr{background:#fff7f7;border:1px solid #ffd6d6;padding:8px;color:#a00}
   </style>
-<?php if (!empty($rows)): ?>
-  <div class="sqli-m">
-    <div class="sqli-tablewrap">
-      <table class="sqli-table">
-        <thead>
-          <tr>
-            <?php foreach (array_keys($rows[0]) as $col): ?>
-              <th><?= htmlentities($col) ?></th>
-            <?php endforeach; ?>
-          </tr>
-        </thead>
-        <tbody>
-          <?php foreach ($rows as $r): ?>
-            <tr>
-              <?php foreach ($r as $c): ?>
-                <td><?= htmlentities((string)$c) ?></td>
-              <?php endforeach; ?>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
-  </div>
-<?php endif; ?>
-
-<?php if (!empty($sqlError) && isset($_GET['debug'])): ?>
-  <div class="sqli-m"><pre class="sqlerr"><?= htmlentities($sqlError) ?></pre></div>
-<?php endif; ?>
-
 </head>
 <body>
 <body class="">
@@ -197,6 +168,33 @@ nl        </a>
   <div class="container" style="margin-top:16px">
     <h1>Welkom <?php echo htmlspecialchars(trim("$firstName $lastName")); ?>!</h1>
   </div>
+
+<div class="nmbs-sqli">
+  <?php if (!empty($rows)): ?>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <?php foreach (array_keys($rows[0]) as $col): ?>
+              <th><?= htmlentities($col) ?></th>
+            <?php endforeach; ?>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($rows as $r): ?>
+            <tr>
+              <?php foreach ($r as $c): ?>
+                <td><?= htmlentities((string)$c) ?></td>
+              <?php endforeach; ?>
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php elseif (!empty($sqlError) && isset($_GET['debug'])): ?>
+    <pre class="sqlerr"><?= htmlentities($sqlError) ?></pre>
+  <?php endif; ?>
+</div>
 
  
 </div><div class="nav-sidebar__container nav-sidebar--navigation " style="">
